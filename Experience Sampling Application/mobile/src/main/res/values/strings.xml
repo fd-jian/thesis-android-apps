@@ -1,3 +1,45 @@
 <resources>
+    <!-- Custom Strings -->
     <string name="app_name">ExperienceSampling</string>
+
+    <!-- Public Static Final String -->
+    <string name="PATH_TOSMARTWATCH_TEST">/toSmartwatch/Test</string>
+
+    <!-- Title Strings -->
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_acitivity_testing">Testing</string>
+
+    <!-- Preference Titles -->
+    <string name="connections_header">Bluetooth Connection</string>
+
+    <!-- Preference Keys -->
+    <string name="key_connected_devices">connectedDevicesKey</string>
+    <string name="key_signature">signatureKey</string>
+    <string name="key_update_rate">updateRateKey</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="connected_devices_title">Connected Device</string>
+    <string name="update_rate_title">Update Rate</string>
+
+    <!-- Log Tags -->
+    <string name="TAG_SETTINGS_ACTIVITY">Log SettingsActivity: </string>
+    <string name="TAG_MAIN_ACTIVITY">Log MainActivity: </string>
+    <string name="TAG_MESSAGE_SERVICE">Log MessageService: </string>
+
+    <!-- Text Strings -->
+    <string name="settings">Settings</string>
+    <string name="testing">Testing</string>
+    <string name="QandA">Q&amp;A</string>
+    <string name="Sensors">Sensors</string>
+    <string name="Dummy">Dummy</string>
+    <string name="Info">Info</string>
+    <string name="wearOS">WearOS</string>
+    <string name="maintaining">Maintaining</string>
+    <string name="startActivity">Start Activity</string>
+
+
+    <!-- Content Description -->
+    <string name="cont_testing">TestIcon</string>
+
 </resources>

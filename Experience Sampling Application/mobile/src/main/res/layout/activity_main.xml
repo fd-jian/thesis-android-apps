@@ -4,15 +4,161 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".activities.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="bottom|center_horizontal"
+            android:baselineAligned="false">
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_main_info"
+                android:layout_width="115sp"
+                android:layout_height="130sp"
+                android:layout_margin="20sp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/icon_info"
+                android:elevation="5dp"
+                android:hapticFeedbackEnabled="false"
+                android:text="@string/Info"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                />
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_main_wearos"
+                android:layout_width="115sp"
+                android:layout_height="130sp"
+                android:layout_margin="20sp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/icon_rocket"
+                android:elevation="5dp"
+                android:hapticFeedbackEnabled="false"
+                android:text="@string/wearOS"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:visibility="visible"
+                />
+
+            <LinearLayout
+                android:id="@+id/ll_main_gif"
+                android:layout_width="115sp"
+                android:layout_height="130sp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <pl.droidsonroids.gif.GifImageButton
+                    android:id="@+id/bt_main_dummy2"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_weight="1"
+                    android:elevation="5dp"
+                    android:src="@drawable/dino_gif_dummy"
+                    android:textAlignment="textEnd"
+                    android:backgroundTint="@color/white"
+                    android:layout_margin="20sp" />
+
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="150sp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_main_smartwatch"
+                android:layout_width="115sp"
+                android:layout_height="130sp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/icon_smartwatch"
+                android:text="@string/Sensors"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:elevation="5dp"
+                android:layout_margin="20sp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_main_database"
+                android:layout_width="115sp"
+                android:layout_height="130sp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/icon_database"
+                android:text="@string/QandA"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:elevation="5dp"
+                android:layout_margin="20sp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="top|center_horizontal">
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_main_testing"
+                android:layout_width="115sp"
+                android:layout_height="130sp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/icon_test"
+                android:text="@string/testing"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:elevation="5dp"
+                android:layout_margin="20sp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/bt_main_setting"
+                android:layout_width="115sp"
+                android:layout_height="130sp"
+                android:backgroundTint="@color/white"
+                android:drawableTop="@drawable/icon_settings"
+                android:text="@string/settings"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:elevation="5dp"
+                android:layout_margin="20sp"/>
+
+
+        </LinearLayout>
+
+
+
+    </LinearLayout>
+
+
+
+
+
+
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

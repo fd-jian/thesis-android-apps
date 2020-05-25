@@ -1,0 +1,30 @@
+<resources>
+
+    <!-- Default Connected Devices PreferenceList -->
+    <string-array name="conn_dev_def_array_entries">
+        <item>Watch 1</item>
+        <item>Watch 2</item>
+    </string-array>
+
+    <string-array name="conn_dev_def_array_values">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <!-- Update Preference -->
+    <string-array name="update_rate_array_entries">
+        <item>15 Seconds</item>
+        <item>30 Seconds</item>
+        <item>60 Seconds</item>
+        <item>120 Seconds</item>
+        <item>180 Seconds</item>
+    </string-array>
+
+    <string-array name="update_rate_array_values">
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+        <item>120</item>
+        <item>180</item>
+    </string-array>
+</resources>

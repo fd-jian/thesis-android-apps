@@ -33,4 +33,6 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
     implementation 'androidx.wear:wear:1.0.0'
     compileOnly 'com.google.android.wearable:wearable:2.4.0'
+    implementation project(path: ':messagestruct')
+
 }
