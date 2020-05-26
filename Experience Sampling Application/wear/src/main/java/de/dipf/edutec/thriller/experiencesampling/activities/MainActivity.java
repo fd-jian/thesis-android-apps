@@ -10,6 +10,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
+import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
+import de.dipf.edutec.thriller.messagestruct.MyMessage;
 
 public class MainActivity extends WearableActivity {
 
@@ -42,5 +44,12 @@ public class MainActivity extends WearableActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, newFilter);
 
         System.out.println("Receiver registered");
+
+        Boolean isIntent = getIntent().getBooleanExtra("bool",false);
+        if(isIntent){
+            SendMessageWear sendMessageWear = new SendMessageWear(this);
+            sendMessageWear.sendAck("/toHandheld/Test", getIntent().getStringExtra("message"));
+        }
+
     }
 }

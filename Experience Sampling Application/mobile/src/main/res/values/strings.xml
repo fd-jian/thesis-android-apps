@@ -4,6 +4,7 @@
 
     <!-- Public Static Final String -->
     <string name="PATH_TOSMARTWATCH_TEST">/toSmartwatch/Test</string>
+    <string name="PATH_TOHANDHELD_TEST">/toHandheld/Test</string>
 
     <!-- Title Strings -->
     <string name="title_activity_settings">Settings</string>
@@ -36,7 +37,7 @@
     <string name="Info">Info</string>
     <string name="wearOS">WearOS</string>
     <string name="maintaining">Maintaining</string>
-    <string name="startActivity">Start Activity</string>
+    <string name="startActivity">Start Wear</string>
 
 
     <!-- Content Description -->

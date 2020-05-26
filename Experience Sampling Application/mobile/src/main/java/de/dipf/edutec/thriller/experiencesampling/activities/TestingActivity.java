@@ -5,15 +5,24 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
+import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
+import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessage;
 
 import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.messagestruct.OnSuccessSendPair;
+import pl.droidsonroids.gif.GifDrawable;
+import pl.droidsonroids.gif.GifImageView;
 
 public class TestingActivity extends AppCompatActivity implements View.OnClickListener {
 
+    // MessageSingleton
+    MessagesSingleton messagesSingleton;
 
+    // PATHS
     private String PATH_SMARTWATCH_TEST;
 
     Button bt_start_act;
@@ -22,8 +31,15 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_testing);
+
         this.PATH_SMARTWATCH_TEST = getResources().getString(R.string.PATH_TOSMARTWATCH_TEST);
+
+
         findGUIElements();
+
+        messagesSingleton = MessagesSingleton.getInstance();
+        Receiver receiver = new Receiver(this);
+
     }
 
 
@@ -53,32 +69,57 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
     public void callStartSmartwatchActivity(){
 
-        MyMessage myMessage = new MyMessage();
+        final MyMessage myMessage = new MyMessage();
         myMessage.setStartActivity(true);
         myMessage.setRestDefault();
 
-        System.out.println(myMessage.encodeMessage());
+        messagesSingleton.registerListener(new MessagesSingleton.OnSuccessListener() {
+            @Override
+            public OnSuccessSendPair onSuccessStateChange(OnSuccessSendPair onSuccessSendPair) {
 
+                if(onSuccessSendPair.getSuccess() == true && myMessage.getUuid().equals(onSuccessSendPair.getUuid())){
+
+                    GifImageView gif = findViewById(R.id.iv_testing_startAct_gif);
+                    gif.setVisibility(View.VISIBLE);
+
+                } else {
+
+                    if(onSuccessSendPair.getSuccess() == false && myMessage.getUuid().equals(onSuccessSendPair.getUuid())){
+
+                        ImageView iv = findViewById(R.id.iv_testing_startAct);
+                        iv.setImageResource(R.drawable.icon_error);
+                    }
+
+                }
+                return null;
+            }
+
+        });
+
+        messagesSingleton.registerListener(new MessagesSingleton.Listener() {
+            @Override
+            public String onStateChange(String uuid) {
+
+                System.out.println("onStateChange is called " + uuid + "  " + myMessage.getUuid());
+
+                if(myMessage.getUuid().equals(uuid)){
+                    GifImageView gif = findViewById(R.id.iv_testing_startAct_gif);
+                    gif.setVisibility(View.GONE);
+
+                    ImageView iv = findViewById(R.id.iv_testing_startAct);
+                    iv.setImageResource(R.drawable.icon_correct);
+                    iv.setVisibility(View.VISIBLE);
+                }
+
+                return null;
+            }
+        });
+
+                System.out.println(myMessage.encodeMessage());
 
         SendMessage messageService = new SendMessage(this);
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
 
 
-        // Debug Spielerein
-        /**
-        GifImageView preloader = findViewById(R.id.iv_testing_startAct_gif);
-        ImageView iv = findViewById(R.id.iv_testing_startAct);
-        if(preloader.getVisibility() == View.VISIBLE){
-            preloader.setVisibility(View.GONE);
-            Random rand = new Random();
-            int randomNum = rand.nextInt((100-0) + 1) + 0;
-            if(randomNum < 50) iv.setImageResource(R.drawable.icon_correct);
-            else iv.setImageResource(R.drawable.icon_error);
-            iv.setVisibility(View.VISIBLE);
-        }else{
-            if(iv.getVisibility() == View.VISIBLE) iv.setVisibility(View.GONE);
-            preloader.setVisibility(View.VISIBLE);
-        }
-         **/
     }
 }

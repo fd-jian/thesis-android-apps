@@ -17,6 +17,7 @@ import com.google.android.gms.wearable.Wearable;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.messagestruct.OnSuccessSendPair;
 
 public class SendMessage extends Application {
 
@@ -52,7 +53,8 @@ public class SendMessage extends Application {
         NewThread sendMessage = new NewThread(path,myMessage.encodeMessage());
         sendMessage.start();
 
-        messagesSingleton.addMessage(myMessage);
+        messagesSingleton.addMessageSend(myMessage);
+
 
     }
 
@@ -92,14 +94,19 @@ public class SendMessage extends Application {
                     sendMessageTask.addOnSuccessListener(new OnSuccessListener<Integer>() {
                         @Override
                         public void onSuccess(Integer integer) {
-                            //Toast.makeText(context,String.valueOf(integer),Toast.LENGTH_LONG).show();
+                            messagesSingleton.addOnSuccessSendPair(
+                                    new OnSuccessSendPair(MyMessage.decodeMessage(message).getUuid(),
+                                            true));
+                            messagesSingleton.addMessageSend(MyMessage.decodeMessage(message));
                         }
                     });
 
                     sendMessageTask.addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            //Toast.makeText(context,e.toString(),Toast.LENGTH_LONG).show();
+                            messagesSingleton.addOnSuccessSendPair(
+                                    new OnSuccessSendPair(MyMessage.decodeMessage(message).getUuid(),
+                                            false));
                         }
                     });
 

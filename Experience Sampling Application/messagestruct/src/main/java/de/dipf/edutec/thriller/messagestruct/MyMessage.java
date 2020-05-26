@@ -41,6 +41,8 @@ public class MyMessage {
     }
 
     public Boolean getStartActivity(){return this.startActivity;}
+    public String getQuestion(){return this.msgQuestion;}
+    public String getUuid(){return this.uuid;}
 
     public String encodeMessage(){
 
