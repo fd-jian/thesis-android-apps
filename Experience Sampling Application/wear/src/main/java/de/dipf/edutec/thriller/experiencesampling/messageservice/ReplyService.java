@@ -51,6 +51,25 @@ public class ReplyService extends IntentService {
 
                 }
             }
+
+            if(intent.getStringExtra("test").equals("choices")){
+                Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
+                if(remoteInput != null){
+                    CharSequence answer = remoteInput.getCharSequence("key_choice_reply");
+                    MyMessage myMessage = MyMessage.decodeMessage(intent.getStringExtra("receivedMessageFromHandheld"));
+                    myMessage.setUserAnswer(String.valueOf(answer));
+                    SendMessageWear sendMessageWear = new SendMessageWear(this);
+                    sendMessageWear.sendAck("/toHandheld/Test", myMessage.encodeMessage());
+                }
+
+
+
+
+
+
+
+
+            }
         }
 
 

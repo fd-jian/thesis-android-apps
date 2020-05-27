@@ -71,7 +71,8 @@ public class Receiver extends BroadcastReceiver {
             String KEY_TEXT_REPLY = "key_text_reply";
 
             RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
-                    .setLabel("Type Message").build();
+                    .setLabel("Type Message")
+                    .build();
 
 
 
@@ -86,6 +87,38 @@ public class Receiver extends BroadcastReceiver {
             Notification notifcation = new NotificationCompat.Builder(context,CHANNEL_ID)
                     .setAutoCancel(true)
                     .setContentTitle("Text Question")
+                    .setContentText(myMessage.getQuestion())
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .addAction(action)
+                    .build();
+
+            notificationManager.notify(0,notifcation);
+
+        }
+
+        if(myMessage.getStartActivity() == false && myMessage.getNumAnsw() <= 3){
+
+            Intent directReplyIntent = new Intent(context, ReplyService.class);
+            directReplyIntent.putExtra("receivedMessageFromHandheld",cipher);
+            directReplyIntent.putExtra("test","choices");
+
+            PendingIntent directReplyPendingIntent = PendingIntent.getService(context, 0, directReplyIntent, flagCancelCurrent);
+            String KEY_CHOICE_REPLY = "key_choice_reply";
+            RemoteInput remoteInput = new RemoteInput.Builder(KEY_CHOICE_REPLY)
+                    .setLabel("Choose")
+                    .setChoices((CharSequence[]) myMessage.getAnswers())
+                    .setAllowFreeFormInput(false)
+                    .build();
+
+            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.ic_launcher,"Reply",directReplyPendingIntent)
+                    .addRemoteInput(remoteInput)
+                    .setAllowGeneratedReplies(false)
+                    .build();
+
+
+            Notification notifcation = new NotificationCompat.Builder(context,CHANNEL_ID)
+                    .setAutoCancel(true)
+                    .setContentTitle("Choices")
                     .setContentText(myMessage.getQuestion())
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .addAction(action)

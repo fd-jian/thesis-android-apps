@@ -42,6 +42,7 @@
     <!-- Text Strings Testing Activity -->
     <string name="startActivity">Start Wear</string>
     <string name="HowAreYou">HowAreYou?</string>
+    <string name="OneTwoThree">1,2 or 3?</string>
 
     <!-- Content Description -->
     <string name="cont_testing">TestIcon</string>

@@ -24,7 +24,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
     // PATHS
     private String PATH_SMARTWATCH_TEST;
-    Button bt_start_act, bt_notify_1;
+    Button bt_start_act, bt_notify_1, bt_notify_2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +47,9 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
         bt_notify_1 = findViewById(R.id.bt_testing_sendNotification);
         bt_notify_1.setOnClickListener(this);
 
+        bt_notify_2 = findViewById(R.id.bt_testing_sendNotification1);
+        bt_notify_2.setOnClickListener(this);
+
         PATH_SMARTWATCH_TEST = getResources().getString(R.string.PATH_TOSMARTWATCH_TEST);
 
 
@@ -63,6 +66,10 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
             case R.id.bt_testing_sendNotification:
                 callSendNotification();
                 break;
+
+
+            case R.id.bt_testing_sendNotification1:
+                callSendNotificationChoices();
             default:
                 break;
         }
@@ -187,6 +194,62 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
         System.out.println("SEND ONE");
 
+
+    }
+    public void callSendNotificationChoices(){
+        ImageView iv = findViewById(R.id.iv_testing_sendNotification1);
+        GifImageView giv = findViewById(R.id.iv_testing_sendNotification1_gif);
+
+        iv.setVisibility(View.GONE);
+        giv.setVisibility(View.GONE);
+
+        final MyMessage myMessage = new MyMessage();
+        myMessage.setStartActivity(false);
+        myMessage.setMsgQuestion("One, two or three?");
+        myMessage.setMsgAnswers(new String[]{"1","2","3"});
+        myMessage.setMsgOrigin(1);
+
+        messagesSingleton.registerListener(new MessagesSingleton.OnSuccessListener() {
+            @Override
+            public OnSuccessSendPair onSuccessStateChange(OnSuccessSendPair onSuccessSendPair) {
+
+                if(onSuccessSendPair.getSuccess() == true && myMessage.getUuid().equals(onSuccessSendPair.getUuid())){
+
+                    GifImageView gif = findViewById(R.id.iv_testing_sendNotification1_gif);
+                    gif.setVisibility(View.VISIBLE);
+
+                } else {
+
+                    if(onSuccessSendPair.getSuccess() == false && myMessage.getUuid().equals(onSuccessSendPair.getUuid())){
+
+                        ImageView iv = findViewById(R.id.iv_testing_sendNotification1);
+                        iv.setImageResource(R.drawable.icon_error);
+                    }
+
+                }
+                return null;
+            }
+
+        });
+
+        messagesSingleton.registerListener(new MessagesSingleton.Listener() {
+            @Override
+            public String onStateChange(String uuid) {
+
+                if(myMessage.getUuid().equals(uuid)){
+                    GifImageView gif = findViewById(R.id.iv_testing_sendNotification1_gif);
+                    gif.setVisibility(View.GONE);
+
+                    ImageView iv = findViewById(R.id.iv_testing_sendNotification1);
+                    iv.setImageResource(R.drawable.icon_correct);
+                    iv.setVisibility(View.VISIBLE);
+                }
+                return null;
+            }
+        });
+
+        SendMessage messageService = new SendMessage(this);
+        messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
 
     }
 }

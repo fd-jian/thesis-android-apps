@@ -31,6 +31,8 @@ dependencies {
     // GIF'S
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.17'
 
+
+
     // Default
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'

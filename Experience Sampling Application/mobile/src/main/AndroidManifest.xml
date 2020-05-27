@@ -13,6 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".activities.ReplyCollectionActivity"></activity>
 
         <service
             android:name=".messageservice.MessageService"
@@ -20,7 +21,11 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-                <data android:scheme="wear" android:host="*" android:pathPrefix="/toHandheld" />
+
+                <data
+                    android:host="*"
+                    android:pathPrefix="/toHandheld"
+                    android:scheme="wear" />
             </intent-filter>
         </service>
 
@@ -31,7 +36,6 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.MainActivity" />
-
         </activity>
         <activity android:name=".activities.MainActivity">
             <intent-filter>
