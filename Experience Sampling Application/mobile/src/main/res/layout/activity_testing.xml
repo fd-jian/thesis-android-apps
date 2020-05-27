@@ -73,6 +73,68 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:backgroundTint="@color/grey"
+            android:elevation="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:contentDescription="@string/cont_testing"
+                    app:srcCompat="@drawable/icon_test"
+                    android:layout_gravity="center"
+                    android:layout_margin="15dp"
+                    />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/bt_testing_sendNotification"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="@string/HowAreYou"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textAllCaps="false"
+                    android:layout_margin="15dp"
+                    android:gravity="center" />
+
+                <ImageView
+                    android:id="@+id/iv_testing_sendNotification"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:contentDescription="@string/cont_testing"
+                    app:srcCompat="@drawable/icon_error"
+                    android:visibility="gone"
+                    android:layout_gravity="center"
+                    android:layout_margin="15dp"
+
+                    />
+
+                <pl.droidsonroids.gif.GifImageView
+                    android:id="@+id/iv_testing_sendNotification_gif"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/icon_preloader"
+                    android:layout_gravity="center"
+                    android:layout_margin="15dp"
+                    android:visibility="gone"/>
+
+
+
+            </LinearLayout>
+
+
+        </com.google.android.material.card.MaterialCardView>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

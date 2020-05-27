@@ -17,21 +17,14 @@ public class MessageService extends WearableListenerService {
 
         if (messageEvent.getPath().equals("/toSmartwatch/Test")) {
 
-            System.out.println("TO THIS POINT");
             final String message = new String(messageEvent.getData());
             Intent messageIntent = new Intent();
             messageIntent.setAction(Intent.ACTION_SEND);
             messageIntent.putExtra("message",message);
             LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
-            System.out.println("I DID SEND");
 
-            /**
-            final String message = new String(messageEvent.getData());
-            Intent messageIntent = new Intent();
-            messageIntent.setAction(Intent.ACTION_SEND);
-            messageIntent.putExtra("message", message);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
-             **/
+
+
         }
         else {
             super.onMessageReceived(messageEvent);

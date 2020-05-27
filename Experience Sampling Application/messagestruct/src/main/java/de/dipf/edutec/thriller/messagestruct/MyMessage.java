@@ -7,6 +7,7 @@ public class MyMessage {
 
     private String msgQuestion;
     private String[] msgAnswers;
+    private String userAnswer;
     private int msgOrigin;
     private int numAnsw;
     private boolean startActivity;
@@ -39,10 +40,20 @@ public class MyMessage {
         }
         if(this.msgQuestion == null) this.msgQuestion = "0";
     }
+    public void setMsgQuestion(String question){this.msgQuestion = question;}
+    public void setMsgOrigin(int origin){this.msgOrigin = 1;}
+    public void setMsgAnswers(String[] answers){
+        this.msgAnswers = answers;
+        this.numAnsw = this.msgAnswers.length;
+    }
+    public void setUserAnswer(String userAnswer){this.userAnswer = userAnswer;}
 
     public Boolean getStartActivity(){return this.startActivity;}
     public String getQuestion(){return this.msgQuestion;}
+    public String[] getAnswers(){return this.msgAnswers;}
+    public int getOrigin(){return this.msgOrigin;}
     public String getUuid(){return this.uuid;}
+    public int getNumAnsw(){return this.numAnsw;}
 
     public String encodeMessage(){
 
@@ -55,11 +66,20 @@ public class MyMessage {
 
         toreturn += this.msgQuestion + ";";
 
-        for(String answer: msgAnswers){
-            toreturn += answer + ",";
+        toreturn += this.userAnswer + ";";
+
+        try{
+
+            for(String answer: msgAnswers){
+                toreturn += answer + ",";
+            }
+            toreturn = toreturn.substring(0, toreturn.length() - 1) +  ";";
+        } catch (Exception e){
+
+
         }
 
-        toreturn = toreturn.substring(0, toreturn.length() - 1) +  ";";
+
 
         return toreturn;
     }
@@ -70,7 +90,12 @@ public class MyMessage {
         myMessage.msgOrigin = Integer.valueOf(cipher[2]);
         myMessage.numAnsw = Integer.valueOf(cipher[3]);
         myMessage.msgQuestion = cipher[4];
-        myMessage.msgAnswers = cipher[5].split(",");
+        myMessage.userAnswer = cipher[5];
+        try{
+            myMessage.msgAnswers = cipher[6].split(",");
+        } catch (Exception e){
+            // TODO
+        }
         return myMessage;
 
 
@@ -104,6 +129,8 @@ public class MyMessage {
                 }
             } catch ( IllegalAccessException ex ) {
                 System.out.println(ex);
+            } catch (Exception e) {
+                // TODO
             }
             result.append(newLine);
         }

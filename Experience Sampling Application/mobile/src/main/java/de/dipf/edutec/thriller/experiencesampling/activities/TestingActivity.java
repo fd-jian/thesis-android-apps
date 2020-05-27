@@ -24,21 +24,17 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
     // PATHS
     private String PATH_SMARTWATCH_TEST;
-
-    Button bt_start_act;
+    Button bt_start_act, bt_notify_1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_testing);
 
-        this.PATH_SMARTWATCH_TEST = getResources().getString(R.string.PATH_TOSMARTWATCH_TEST);
-
-
         findGUIElements();
 
         messagesSingleton = MessagesSingleton.getInstance();
-        Receiver receiver = new Receiver(this);
+
 
     }
 
@@ -48,6 +44,10 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
         bt_start_act = findViewById(R.id.bt_testing_startAct);
         bt_start_act.setOnClickListener(this);
 
+        bt_notify_1 = findViewById(R.id.bt_testing_sendNotification);
+        bt_notify_1.setOnClickListener(this);
+
+        PATH_SMARTWATCH_TEST = getResources().getString(R.string.PATH_TOSMARTWATCH_TEST);
 
 
     }
@@ -58,9 +58,11 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
         switch(v.getId()){
             case R.id.bt_testing_startAct:
                 callStartSmartwatchActivity();
-
                 break;
 
+            case R.id.bt_testing_sendNotification:
+                callSendNotification();
+                break;
             default:
                 break;
         }
@@ -68,6 +70,13 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     public void callStartSmartwatchActivity(){
+
+        GifImageView gif = findViewById(R.id.iv_testing_startAct_gif);
+        gif.setVisibility(View.GONE);
+
+        ImageView iv = findViewById(R.id.iv_testing_startAct);
+        iv.setVisibility(View.GONE);
+
 
         final MyMessage myMessage = new MyMessage();
         myMessage.setStartActivity(true);
@@ -119,6 +128,64 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
         SendMessage messageService = new SendMessage(this);
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
+
+
+    }
+    public void callSendNotification(){
+        ImageView iv = findViewById(R.id.iv_testing_sendNotification);
+        GifImageView giv = findViewById(R.id.iv_testing_sendNotification_gif);
+
+        iv.setVisibility(View.GONE);
+        giv.setVisibility(View.GONE);
+
+        final MyMessage myMessage = new MyMessage();
+        myMessage.setStartActivity(false);
+        myMessage.setMsgQuestion("How are you?");
+        myMessage.setMsgAnswers(new String[]{});
+        myMessage.setMsgOrigin(1);
+
+        messagesSingleton.registerListener(new MessagesSingleton.OnSuccessListener() {
+            @Override
+            public OnSuccessSendPair onSuccessStateChange(OnSuccessSendPair onSuccessSendPair) {
+
+                if(onSuccessSendPair.getSuccess() == true && myMessage.getUuid().equals(onSuccessSendPair.getUuid())){
+
+                    GifImageView gif = findViewById(R.id.iv_testing_sendNotification_gif);
+                    gif.setVisibility(View.VISIBLE);
+
+                } else {
+
+                    if(onSuccessSendPair.getSuccess() == false && myMessage.getUuid().equals(onSuccessSendPair.getUuid())){
+
+                        ImageView iv = findViewById(R.id.iv_testing_sendNotification);
+                        iv.setImageResource(R.drawable.icon_error);
+                    }
+
+                }
+                return null;
+            }
+
+        });
+
+        messagesSingleton.registerListener(new MessagesSingleton.Listener() {
+            @Override
+            public String onStateChange(String uuid) {
+
+                if(myMessage.getUuid().equals(uuid)){
+                    GifImageView gif = findViewById(R.id.iv_testing_sendNotification_gif);
+                    gif.setVisibility(View.GONE);
+
+                    ImageView iv = findViewById(R.id.iv_testing_sendNotification);
+                    iv.setImageResource(R.drawable.icon_correct);
+                    iv.setVisibility(View.VISIBLE);
+                }
+                return null;
+            }
+        });
+
+        SendMessage messageService = new SendMessage(this);
+        messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
+        System.out.println("SEND ONE");
 
 
     }

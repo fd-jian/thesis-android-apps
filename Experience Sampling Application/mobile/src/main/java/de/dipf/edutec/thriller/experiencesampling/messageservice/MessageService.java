@@ -25,6 +25,7 @@ public class MessageService extends WearableListenerService {
 
         if(messageEvent.getPath().equals("/toHandheld/Test")){
 
+            System.out.println("INSIDE FIRST ACKNOWLEDGEMENT");
             final String path = messageEvent.getPath();
             final String msg = new String(messageEvent.getData());
 
@@ -33,7 +34,7 @@ public class MessageService extends WearableListenerService {
             messageIntent.putExtra("message",msg);
 
             LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
-
+            System.out.println("BROADCASTED");
         }
 
 

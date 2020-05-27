@@ -37,8 +37,11 @@
     <string name="Info">Info</string>
     <string name="wearOS">WearOS</string>
     <string name="maintaining">Maintaining</string>
-    <string name="startActivity">Start Wear</string>
 
+
+    <!-- Text Strings Testing Activity -->
+    <string name="startActivity">Start Wear</string>
+    <string name="HowAreYou">HowAreYou?</string>
 
     <!-- Content Description -->
     <string name="cont_testing">TestIcon</string>

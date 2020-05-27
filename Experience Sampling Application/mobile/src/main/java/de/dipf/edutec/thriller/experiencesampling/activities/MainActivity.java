@@ -21,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
+import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageButton;
 
@@ -37,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getWindow().requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
         setContentView(R.layout.activity_main);
         findGUIElements();
-
+        Receiver receiver = new Receiver(this);
 
 
 

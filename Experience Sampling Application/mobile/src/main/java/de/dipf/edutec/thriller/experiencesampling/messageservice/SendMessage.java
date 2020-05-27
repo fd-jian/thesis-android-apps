@@ -39,23 +39,13 @@ public class SendMessage extends Application {
         });
     }
 
-    /**
-    public static MessageService getInstance(){
-        if(MessageService.instance == null){
-            MessageService.instance = new MessageService();
-
-        }
-        return MessageService.instance;
-    }**/
 
     public void sendMessage(String path, MyMessage myMessage){
 
         NewThread sendMessage = new NewThread(path,myMessage.encodeMessage());
         sendMessage.start();
-
+        
         messagesSingleton.addMessageSend(myMessage);
-
-
     }
 
     public void sendmessage(String messageText) {
