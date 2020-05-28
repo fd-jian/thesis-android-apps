@@ -1,3 +1,3 @@
 ## Wiki Google Doc
-[Doc Link](https://docs.google.com/document/d/12xxDCDPCWenFj4NRXhZs4b5nKSLCa3EZ_gHlkjbrVNk/edit?usp=sharing)
+[Doc Link](https://docs.google.com/spreadsheets/d/1un-965-LAptT_QFSWqjXU4S76e3s4ppeOEl8tEc_oYo/edit?usp=sharing)
 
