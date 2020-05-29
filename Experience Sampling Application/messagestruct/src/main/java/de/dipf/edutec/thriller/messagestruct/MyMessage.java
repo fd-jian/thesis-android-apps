@@ -54,6 +54,7 @@ public class MyMessage {
     public int getOrigin(){return this.msgOrigin;}
     public String getUuid(){return this.uuid;}
     public int getNumAnsw(){return this.numAnsw;}
+    public String getUserAnswer(){return this.userAnswer;}
 
     public String encodeMessage(){
 

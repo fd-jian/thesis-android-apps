@@ -39,16 +39,27 @@ public class MessagesSingleton {
         if(onSuccListener != null) onSuccListener.onSuccessStateChange(onSuccessSendPair);
     }
 
+    public boolean existUUIDReceived(String uuid){
+        for(MyMessage msg: messagesReceived){
+            if(msg.getUuid().equals(uuid)){
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     // Variabel change Listener
     private MessagesSingleton.Listener mListener = null;
     public void registerListener(MessagesSingleton.Listener listener) {mListener = listener; }
+    public void unregisterListener(){mListener = null;}
     public interface Listener{
         String onStateChange(String uuid);
     }
 
     private MessagesSingleton.OnSuccessListener onSuccListener = null;
     public void registerListener(MessagesSingleton.OnSuccessListener listener) {onSuccListener = listener;}
+    public void unregisterListenerOnSucc(){onSuccListener = null;}
     public interface OnSuccessListener{
         OnSuccessSendPair onSuccessStateChange(OnSuccessSendPair onSuccessSendPair);
 

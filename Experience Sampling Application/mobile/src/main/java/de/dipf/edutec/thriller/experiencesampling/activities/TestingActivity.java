@@ -70,6 +70,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
             case R.id.bt_testing_sendNotification1:
                 callSendNotificationChoices();
+                break;
             default:
                 break;
         }
@@ -97,6 +98,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
                     GifImageView gif = findViewById(R.id.iv_testing_startAct_gif);
                     gif.setVisibility(View.VISIBLE);
+                    messagesSingleton.unregisterListenerOnSucc();
 
                 } else {
 
@@ -104,6 +106,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
                         ImageView iv = findViewById(R.id.iv_testing_startAct);
                         iv.setImageResource(R.drawable.icon_error);
+                        messagesSingleton.unregisterListenerOnSucc();
                     }
 
                 }
@@ -125,6 +128,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
                     ImageView iv = findViewById(R.id.iv_testing_startAct);
                     iv.setImageResource(R.drawable.icon_correct);
                     iv.setVisibility(View.VISIBLE);
+                    messagesSingleton.unregisterListener();
                 }
 
                 return null;
@@ -159,6 +163,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
                     GifImageView gif = findViewById(R.id.iv_testing_sendNotification_gif);
                     gif.setVisibility(View.VISIBLE);
+                    messagesSingleton.unregisterListenerOnSucc();
 
                 } else {
 
@@ -166,6 +171,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
                         ImageView iv = findViewById(R.id.iv_testing_sendNotification);
                         iv.setImageResource(R.drawable.icon_error);
+                        messagesSingleton.unregisterListenerOnSucc();
                     }
 
                 }
@@ -185,6 +191,8 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
                     ImageView iv = findViewById(R.id.iv_testing_sendNotification);
                     iv.setImageResource(R.drawable.icon_correct);
                     iv.setVisibility(View.VISIBLE);
+                    messagesSingleton.unregisterListener();
+
                 }
                 return null;
             }
@@ -218,12 +226,16 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
                     GifImageView gif = findViewById(R.id.iv_testing_sendNotification1_gif);
                     gif.setVisibility(View.VISIBLE);
 
+                    messagesSingleton.unregisterListenerOnSucc();
+
                 } else {
 
                     if(onSuccessSendPair.getSuccess() == false && myMessage.getUuid().equals(onSuccessSendPair.getUuid())){
 
                         ImageView iv = findViewById(R.id.iv_testing_sendNotification1);
                         iv.setImageResource(R.drawable.icon_error);
+
+                        messagesSingleton.unregisterListenerOnSucc();
                     }
 
                 }
@@ -243,6 +255,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
                     ImageView iv = findViewById(R.id.iv_testing_sendNotification1);
                     iv.setImageResource(R.drawable.icon_correct);
                     iv.setVisibility(View.VISIBLE);
+                    messagesSingleton.unregisterListener();
                 }
                 return null;
             }

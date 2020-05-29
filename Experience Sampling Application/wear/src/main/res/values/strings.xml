@@ -5,6 +5,9 @@
     <string name="notiChannelID">ExperienceSamplingChannelID</string>
     <string name="notiChannelName">Experience Sampling</string>
 
-
-
+    <string name="key_user_reply">key_user_reply</string>
+    <string name="key_message_from_handheld">key_message_from_handheld</string>
+    <string name="key_test_text">key_test_text</string>
+    <string name="key_test_choice">key_test_choice</string>
+    <string name="key_test_start_activity">key_test_start_activity</string>
 </resources>

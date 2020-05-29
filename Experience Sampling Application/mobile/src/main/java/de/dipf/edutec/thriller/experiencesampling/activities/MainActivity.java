@@ -120,6 +120,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     bt_wearos.setVisibility(View.VISIBLE);
                     ll.setVisibility(View.GONE);
                 }
+                break;
+            case R.id.bt_main_database:
+                intent = new Intent(MainActivity.this, ReplyCollectionActivity.class);
+                startActivity(intent,options.toBundle());
+                break;
             default:
                 break;
 

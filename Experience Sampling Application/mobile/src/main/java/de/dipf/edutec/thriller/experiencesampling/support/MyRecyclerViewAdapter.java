@@ -9,20 +9,24 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.w3c.dom.Text;
+
 import java.util.List;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 
 public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.ViewHolder> {
 
-    private List<String> mData;
+    private List<String> mQuestions;
+    private List<String> mAnswers;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    MyRecyclerViewAdapter(Context context, List<String> data) {
+    public MyRecyclerViewAdapter(Context context, List<String> questions, List<String> answers) {
         this.mInflater = LayoutInflater.from(context);
-        this.mData = data;
+        this.mQuestions = questions;
+        this.mAnswers = answers;
     }
 
     // inflates the row layout from xml when needed
@@ -35,24 +39,29 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     // binds the data to the TextView in each row
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String animal = mData.get(position);
-        holder.myTextView.setText(animal);
+        String question = mQuestions.get(position);
+        String answer = mAnswers.get(position);
+        holder.questionView.setText(":   " + answer);
+        holder.answerView.setText(question);
+
     }
 
     // total number of rows
     @Override
     public int getItemCount() {
-        return mData.size();
+        return mQuestions.size();
     }
 
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView myTextView;
+        TextView questionView;
+        TextView answerView;
 
         ViewHolder(View itemView) {
             super(itemView);
-            myTextView = itemView.findViewById(R.id.row_answer);
+            questionView = itemView.findViewById(R.id.row_question);
+            answerView = itemView.findViewById(R.id.row_answer);
             itemView.setOnClickListener(this);
         }
 
@@ -64,11 +73,11 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
 
     // convenience method for getting data at click position
     String getItem(int id) {
-        return mData.get(id);
+        return mQuestions.get(id);
     }
 
     // allows clicks events to be caught
-    void setClickListener(ItemClickListener itemClickListener) {
+    public void setClickListener(ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
     }
 

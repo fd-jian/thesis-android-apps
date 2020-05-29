@@ -35,11 +35,14 @@ public class Receiver extends BroadcastReceiver {
 
         System.out.println("MOBILE RECEIVER RECEIVED SOMETHING");
         MyMessage myMessage = MyMessage.decodeMessage(intent.getStringExtra("message"));
-        System.out.println(myMessage.toString());
 
-        messagesSingleton.addMessageReceived(myMessage);
 
-        System.out.println("ADDED MESSAGE TO MESSAGESINGLETON");
+        if(messagesSingleton.existUUIDReceived(myMessage.getUuid()) == false){
+            System.out.println(myMessage.toString());
+            messagesSingleton.addMessageReceived(myMessage);
+            System.out.println("ADDED MESSAGE TO MESSAGESINGLETON");
+        }
+
 
     }
 

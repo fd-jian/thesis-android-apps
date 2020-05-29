@@ -9,6 +9,7 @@
     <!-- Title Strings -->
     <string name="title_activity_settings">Settings</string>
     <string name="title_acitivity_testing">Testing</string>
+    <string name="title_acitivty_replyCollection">Reply Collection</string>
 
     <!-- Preference Titles -->
     <string name="connections_header">Bluetooth Connection</string>

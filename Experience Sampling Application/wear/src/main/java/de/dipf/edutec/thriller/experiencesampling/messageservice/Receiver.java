@@ -1,7 +1,7 @@
 package de.dipf.edutec.thriller.experiencesampling.messageservice;
 
 
-
+import androidx.core.app.NotificationCompat.WearableExtender;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -14,6 +14,8 @@ import android.os.Bundle;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
+
+import com.google.android.gms.common.util.ArrayUtils;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
@@ -76,7 +78,7 @@ public class Receiver extends BroadcastReceiver {
 
 
 
-            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.ic_launcher,"Reply",directReplyPendingIntent)
+            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.icon_reply,"Reply",directReplyPendingIntent)
                     .addRemoteInput(remoteInput).build();
 
 
@@ -96,7 +98,7 @@ public class Receiver extends BroadcastReceiver {
 
         }
 
-        if(myMessage.getStartActivity() == false && myMessage.getNumAnsw() <= 3){
+        if(myMessage.getStartActivity() == false && myMessage.getNumAnsw() <= 3 && myMessage.getNumAnsw() > 0){
 
             Intent directReplyIntent = new Intent(context, ReplyService.class);
             directReplyIntent.putExtra("receivedMessageFromHandheld",cipher);
@@ -104,19 +106,19 @@ public class Receiver extends BroadcastReceiver {
 
             PendingIntent directReplyPendingIntent = PendingIntent.getService(context, 0, directReplyIntent, flagCancelCurrent);
             String KEY_CHOICE_REPLY = "key_choice_reply";
+
             RemoteInput remoteInput = new RemoteInput.Builder(KEY_CHOICE_REPLY)
                     .setLabel("Choose")
-                    .setChoices((CharSequence[]) myMessage.getAnswers())
+                    .setChoices((CharSequence[]) myMessage.getAnswers() )
                     .setAllowFreeFormInput(false)
                     .build();
 
-            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.ic_launcher,"Reply",directReplyPendingIntent)
+            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.icon_reply,"Reply",directReplyPendingIntent)
                     .addRemoteInput(remoteInput)
-                    .setAllowGeneratedReplies(false)
                     .build();
 
 
-            Notification notifcation = new NotificationCompat.Builder(context,CHANNEL_ID)
+            Notification notification = new NotificationCompat.Builder(context,CHANNEL_ID)
                     .setAutoCancel(true)
                     .setContentTitle("Choices")
                     .setContentText(myMessage.getQuestion())
@@ -124,7 +126,7 @@ public class Receiver extends BroadcastReceiver {
                     .addAction(action)
                     .build();
 
-            notificationManager.notify(0,notifcation);
+            notificationManager.notify(0,notification);
 
         }
 
