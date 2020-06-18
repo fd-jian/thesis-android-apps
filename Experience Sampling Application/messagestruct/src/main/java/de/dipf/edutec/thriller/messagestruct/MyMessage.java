@@ -51,6 +51,7 @@ public class MyMessage {
     public Boolean getStartActivity(){return this.startActivity;}
     public String getQuestion(){return this.msgQuestion;}
     public String[] getAnswers(){return this.msgAnswers;}
+
     public int getOrigin(){return this.msgOrigin;}
     public String getUuid(){return this.uuid;}
     public int getNumAnsw(){return this.numAnsw;}
@@ -80,11 +81,12 @@ public class MyMessage {
 
         }
 
-
-
         return toreturn;
     }
+
+
     public static MyMessage decodeMessage(String encoded){
+
         String[] cipher = encoded.split(";");
         MyMessage myMessage = new MyMessage(cipher[1]);
         myMessage.setStartActivity(Boolean.valueOf(cipher[0]));
@@ -99,6 +101,30 @@ public class MyMessage {
         }
         return myMessage;
 
+
+    }
+
+    public static boolean isTypeMyMessage(String text){
+        try{
+            String[] cipher = text.split(";");
+            MyMessage myMessage = new MyMessage(cipher[1]);
+            myMessage.setStartActivity(Boolean.valueOf(cipher[0]));
+            myMessage.msgOrigin = Integer.valueOf(cipher[2]);
+            myMessage.numAnsw = Integer.valueOf(cipher[3]);
+            myMessage.msgQuestion = cipher[4];
+            myMessage.userAnswer = cipher[5];
+            try{
+                myMessage.msgAnswers = cipher[6].split(",");
+            } catch (Exception e){
+                // TODO
+            }
+
+            return true;
+        }catch (Exception e){
+
+            return false;
+
+        }
 
     }
     public String toString() {
@@ -141,3 +167,8 @@ public class MyMessage {
     }
 
 }
+
+
+// Example false;55e1f97c-62c9-4c08-aefe-2a075abc793e;1;0;How are you?;null;
+// Example false;d8bd78d0-3584-42b0-9fc7-cfc40ca52c91;1;3;One, two or three?;null;1,2,3;
+// Example false;55e1f97c-62c9-4c08-aefe-2a075abc792e;1;0;Was machst du gerade?;null;

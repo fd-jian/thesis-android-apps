@@ -10,6 +10,8 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -23,7 +25,7 @@ import de.dipf.edutec.thriller.messagestruct.MyMessage;
 
 public class MainActivity extends WearableActivity {
 
-    private TextView mTextView;
+    private Button bt_main_startSession;
 
     @Override
     public void onRestart() {
@@ -88,7 +90,14 @@ public class MainActivity extends WearableActivity {
     }
 
     public void findGUIElements(){
-        mTextView = (TextView) findViewById(R.id.text);
-        mTextView.setText("Hello Dear");
+        bt_main_startSession = findViewById(R.id.bt_main_startSession);
+        bt_main_startSession.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO
+                // Start Smartphone Activity + Start Websocket Backend.
+            }
+        });
+
     }
 }

@@ -28,6 +28,7 @@
     <string name="TAG_SETTINGS_ACTIVITY">Log SettingsActivity: </string>
     <string name="TAG_MAIN_ACTIVITY">Log MainActivity: </string>
     <string name="TAG_MESSAGE_SERVICE">Log MessageService: </string>
+    <string name="TAG_WEBSOCKET_RECEIVED">Websocket received: </string>
 
     <!-- Text Strings -->
     <string name="settings">Settings</string>
@@ -38,6 +39,7 @@
     <string name="Info">Info</string>
     <string name="wearOS">WearOS</string>
     <string name="maintaining">Maintaining</string>
+    <string name="refresh">Refresh</string>
 
 
     <!-- Text Strings Testing Activity -->

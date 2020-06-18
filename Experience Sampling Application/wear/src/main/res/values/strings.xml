@@ -10,4 +10,8 @@
     <string name="key_test_text">key_test_text</string>
     <string name="key_test_choice">key_test_choice</string>
     <string name="key_test_start_activity">key_test_start_activity</string>
+
+    // User Interface Strings
+    <string name="start_session">Start Session</string>
+
 </resources>

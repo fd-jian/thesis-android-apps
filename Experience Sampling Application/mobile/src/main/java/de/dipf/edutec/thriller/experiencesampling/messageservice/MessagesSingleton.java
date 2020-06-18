@@ -47,6 +47,14 @@ public class MessagesSingleton {
         }
         return false;
     }
+    public String getMyMessageByUUID(String uuid){
+        for(MyMessage msg : messagesReceived){
+            if(msg.getUuid().equals(uuid)){
+                return msg.encodeMessage();
+            }
+        }
+        return "";
+    }
 
 
     // Variabel change Listener

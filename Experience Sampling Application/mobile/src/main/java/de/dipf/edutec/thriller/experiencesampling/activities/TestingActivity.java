@@ -200,7 +200,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
         SendMessage messageService = new SendMessage(this);
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
-        System.out.println("SEND ONE");
+        System.out.println(myMessage.encodeMessage());
 
 
     }
@@ -263,6 +263,6 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
         SendMessage messageService = new SendMessage(this);
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
-
+        System.out.println(myMessage.encodeMessage());
     }
 }
