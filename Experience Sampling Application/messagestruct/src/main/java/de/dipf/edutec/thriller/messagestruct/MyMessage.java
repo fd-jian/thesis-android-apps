@@ -171,4 +171,3 @@ public class MyMessage {
 
 // Example false;55e1f97c-62c9-4c08-aefe-2a075abc793e;1;0;How are you?;null;
 // Example false;d8bd78d0-3584-42b0-9fc7-cfc40ca52c91;1;3;One, two or three?;null;1,2,3;
-// Example false;55e1f97c-62c9-4c08-aefe-2a075abc792e;1;0;Was machst du gerade?;null;
