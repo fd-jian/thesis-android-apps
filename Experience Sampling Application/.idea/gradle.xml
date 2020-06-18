@@ -4,19 +4,29 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="testRunner" value="PLATFORM" />
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/deamonwear" />
             <option value="$PROJECT_DIR$/messagestruct" />
             <option value="$PROJECT_DIR$/mobile" />
+            <option value="$PROJECT_DIR$/phone" />
             <option value="$PROJECT_DIR$/wear" />
+            <option value="$PROJECT_DIR$/wearable" />
           </set>
         </option>
-        <option name="resolveModulePerSourceSet" value="false" />
+        <option name="useQualifiedModuleNames" value="true" />
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/wearable" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/wearable" />
+          </set>
+        </option>
+        <option name="useQualifiedModuleNames" value="true" />
       </GradleProjectSettings>
     </option>
   </component>
