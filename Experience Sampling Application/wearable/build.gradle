@@ -10,7 +10,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "de.dipf.edutec.thriller.experiencesampling"
+        applicationId "com.example.mywatch"
         minSdkVersion 28
         targetSdkVersion 29
         versionCode 1
@@ -27,17 +27,11 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    // Added for the Design
-    implementation 'com.google.android.material:material:1.2.0-alpha06'
-
-    // Defaults
     implementation 'com.google.android.support:wearable:2.4.0'
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'
+    implementation 'androidx.wear:wear:1.0.0'
     implementation 'androidx.percentlayout:percentlayout:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
-    implementation 'androidx.wear:wear:1.0.0'
     compileOnly 'com.google.android.wearable:wearable:2.4.0'
-    implementation project(path: ':messagestruct')
-
 }
