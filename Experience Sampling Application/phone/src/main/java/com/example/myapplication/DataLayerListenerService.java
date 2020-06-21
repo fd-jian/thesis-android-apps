@@ -15,9 +15,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,7 +34,7 @@ public class DataLayerListenerService extends WearableListenerService {
     public static final String SECONDS_ELAPSED = "SECONDS_ELAPSED";
     public static final String MESSAGES_PER_SECOND = "MESSAGES_PER_SECOND";
     private static final String LOG = DataLayerListenerService.class.getSimpleName();
-    private float[] cachedAccData = { 0, 0, 0 };
+    private float[] cachedAccData = {0, 0, 0};
     private int messageCounter = 0;
     private long timestampSeconds = Instant.now().getEpochSecond();
     private long lastMessageReceived;
@@ -46,7 +51,7 @@ public class DataLayerListenerService extends WearableListenerService {
             long secondsElapsed = newTimestamp - timestampSeconds;
             float messagesPerSecond = secondsElapsed != 0 ? (float) messageCounter / (float) secondsElapsed : 0F;
 
-            if(newTimestamp - lastMessageReceived > 5) {
+            if (newTimestamp - lastMessageReceived > 5) {
                 secondsElapsed = 0;
                 messageCounter = 0;
                 timestampSeconds = newTimestamp;
@@ -87,20 +92,25 @@ public class DataLayerListenerService extends WearableListenerService {
 
         float[] floats = new float[3];
         byte[] tempChunk = new byte[4];
-        for (int i = 0; i < 12; i+=4) {
+        for (int i = 0; i < 12; i += 4) {
             System.arraycopy(data, i, tempChunk, 0, 4);
-            floats[i/4] = ByteBuffer.wrap(tempChunk).getFloat();
+            floats[i / 4] = ByteBuffer.wrap(tempChunk).getFloat();
         }
 
         cachedAccData = floats;
         ++messageCounter;
-        lastMessageReceived = Instant.now().getEpochSecond();
+        Instant now = Instant.now();
+        lastMessageReceived = now.getEpochSecond();
 
-        if(!mqttService.isConnected()) {
+        if (!mqttService.isConnected()) {
             mqttService.connect();
         }
 
-        mqttService.sendMessage("123", data);
+        mqttService.sendMessage("123",
+                String.format("%s;%s",
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh-mm-ss")
+                                .format(ZonedDateTime.ofInstant(now, ZoneId.systemDefault())),
+                        Arrays.toString(floats)).getBytes());
     }
 
     @Override
