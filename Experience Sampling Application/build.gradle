@@ -5,8 +5,8 @@ buildscript {
     repositories {
         google()
         jcenter()
-        
     }
+
     dependencies {
         classpath 'com.android.tools.build:gradle:3.6.3'
         classpath "android.arch.navigation:navigation-safe-args-gradle-plugin:1.0.0-alpha09"
@@ -20,8 +20,18 @@ allprojects {
     repositories {
         google()
         jcenter()
-        
     }
+}
+
+def mapstructVersion = '1.2.0.Final'
+def lombokVersion = '1.18.10'
+
+ext {
+    supportDependencies = [
+            lombok: "org.projectlombok:lombok:${lombokVersion}",
+            mapstruct: "org.mapstruct:mapstruct-jdk8:${mapstructVersion}",
+            mapstructProcessor: "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+   ]
 }
 
 task clean(type: Delete) {

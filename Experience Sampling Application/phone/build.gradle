@@ -29,6 +29,9 @@ android {
 
 }
 
+
+def lombokVersion = '1.18.10'
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
@@ -47,4 +50,14 @@ dependencies {
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'
     implementation 'androidx.wear:wear:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+
+    // Lombok
+    implementation supportDependencies.lombok
+    annotationProcessor supportDependencies.lombok
+    testAnnotationProcessor supportDependencies.lombok
+
+//  Mapstruct
+    implementation supportDependencies.mapstruct
+    annotationProcessor supportDependencies.mapstructProcessor
+    testAnnotationProcessor supportDependencies.mapstructProcessor
 }
