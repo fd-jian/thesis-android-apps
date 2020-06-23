@@ -40,6 +40,7 @@ public class DataLayerListenerService extends WearableListenerService {
     private long lastMessageReceived;
 
     private MqttService mqttService;
+    private CustomSslSocketFactory socketFactory;
 
     private Handler handler = new Handler();
 
@@ -117,5 +118,9 @@ public class DataLayerListenerService extends WearableListenerService {
     public void onCreate() {
         super.onCreate();
         this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
+
+        if(mqttService == null) {
+            throw new RuntimeException();
+        }
     }
 }
