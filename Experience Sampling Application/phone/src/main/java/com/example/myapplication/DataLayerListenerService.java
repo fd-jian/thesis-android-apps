@@ -9,6 +9,8 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -107,11 +109,17 @@ public class DataLayerListenerService extends WearableListenerService {
             mqttService.connect();
         }
 
-        mqttService.sendMessage("123",
-                String.format("%s;%s",
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh-mm-ss")
-                                .format(ZonedDateTime.ofInstant(now, ZoneId.systemDefault())),
-                        Arrays.toString(floats)).getBytes());
+        JSONObject sample = new JSONObject();
+        try {
+            sample.put("time", now.toEpochMilli());
+            sample.put("x", floats[0]);
+            sample.put("y", floats[1]);
+            sample.put("z", floats[2]);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        mqttService.sendMessage("123", sample.toString().getBytes());
     }
 
     @Override
