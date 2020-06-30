@@ -8,6 +8,8 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
 @Getter
 public class ApplicationContext {
+    // TODO: unsafe certificate validation for development, turn off later
+    public static final boolean DEVELOPMENT = true;
 
     private final MqttService mqttService;
 
@@ -17,7 +19,7 @@ public class ApplicationContext {
         connOpts.setCleanSession(true);
         connOpts.setAutomaticReconnect(true);
         connOpts.setConnectionTimeout(10);
-        connOpts.setSocketFactory(new CustomSslSocketFactory(ctx, caRes).create());
+        connOpts.setSocketFactory(new CustomSslSocketFactory(ctx, caRes, DEVELOPMENT).create());
 
         mqttService = new MqttService(
                 MqttClientBuilder.builder()
