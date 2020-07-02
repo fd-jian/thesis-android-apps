@@ -17,6 +17,7 @@ import android.widget.TextView;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.security.acl.NotOwnerException;
+import java.util.Optional;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
@@ -26,6 +27,7 @@ import de.dipf.edutec.thriller.messagestruct.MyMessage;
 public class MainActivity extends WearableActivity {
 
     private Button bt_main_startSession;
+    private Button bt_main_stopSession;
 
     @Override
     public void onRestart() {
@@ -47,7 +49,12 @@ public class MainActivity extends WearableActivity {
         setAmbientEnabled();
 
         // Handling our GUI Elements
-        findGUIElements();
+        Optional.ofNullable((Button) findViewById(R.id.bt_main_startSession))
+                .orElseThrow(() -> new RuntimeException("Button not found."))
+                .setOnClickListener(v -> {
+                    // TODO
+                    // Start Smartphone Activity + Start Websocket Backend.
+                });
 
         // Ability to Receive Messages from the MessageService ( WearableListener )
         IntentFilter newFilter = new IntentFilter(Intent.ACTION_SEND);
@@ -57,8 +64,8 @@ public class MainActivity extends WearableActivity {
         System.out.println("Receiver registered");
 
         // If we restarted our Application via handheld we have to send an acknowledment
-        Boolean isIntent = getIntent().getBooleanExtra("bool",false);
-        if(isIntent){
+        Boolean isIntent = getIntent().getBooleanExtra("bool", false);
+        if (isIntent) {
             SendMessageWear sendMessageWear = new SendMessageWear(this);
             sendMessageWear.sendAck("/toHandheld/Test", getIntent().getStringExtra("message"));
         }
@@ -67,7 +74,7 @@ public class MainActivity extends WearableActivity {
 
     }
 
-    public void createNotificationChannel(){
+    public void createNotificationChannel() {
         NotificationManager notificationManager = (NotificationManager)
                 getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -75,29 +82,21 @@ public class MainActivity extends WearableActivity {
         String channelName = getResources().getString(R.string.notiChannelName);
         int importance = NotificationManager.IMPORTANCE_HIGH;
 
-        @SuppressLint("WrongConstant") NotificationChannel notificationChannel = new NotificationChannel(channelID,channelName,importance);
+        @SuppressLint("WrongConstant") NotificationChannel notificationChannel = new NotificationChannel(channelID, channelName, importance);
         notificationChannel.enableLights(true);
         notificationChannel.setLightColor(Color.RED);
 
         notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
         notificationChannel.setShowBadge(true);
         notificationChannel.setVibrationPattern(new long[]{0, 1000, 500, 50,
-                                                            0, 1000, 500, 50,
-                                                            0, 1000, 500, 50});
+                0, 1000, 500, 50,
+                0, 1000, 500, 50});
         notificationChannel.enableVibration(true);
         notificationManager.createNotificationChannel(notificationChannel);
 
     }
 
-    public void findGUIElements(){
-        bt_main_startSession = findViewById(R.id.bt_main_startSession);
-        bt_main_startSession.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO
-                // Start Smartphone Activity + Start Websocket Backend.
-            }
-        });
+    public void findGUIElements() {
 
     }
 }
