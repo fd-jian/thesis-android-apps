@@ -74,7 +74,7 @@ public class SensorDataService extends IntentService {
     private void startStreaming() {
         SensorDataFileLogger sensorDataFileLogger = SensorDataFileLogger.create(getApplicationContext());
         Helper.accelerometerListener = new AccelerometerListener(
-                Wearable.getMessageClient(this), sensorDataFileLogger);
+                Wearable.getMessageClient(this.getApplicationContext()), sensorDataFileLogger);
 
         if (Helper.accelerometerListener.getAccelerometerNodeId() != null) {
             registerListener();

@@ -27,7 +27,11 @@ import de.dipf.edutec.thriller.experiencesampling.sensors.SensorDataService;
 
 public class MainActivity extends WearableActivity {
 
+    private boolean running = false;
+
     private static final String TAG = "wear:" + MainActivity.class.getSimpleName().toLowerCase();
+    private Button startButton;
+    private Button stopButton;
 
     @Override
     public void onRestart() {
@@ -48,21 +52,30 @@ public class MainActivity extends WearableActivity {
         // Enables Always-on
         setAmbientEnabled();
 
+        startButton = Optional.ofNullable((Button) findViewById(R.id.bt_main_startSession))
+                .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", R.id.bt_main_startSession)));
+
+        stopButton = Optional.ofNullable((Button) findViewById(R.id.bt_main_stopSession))
+                .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", R.id.bt_main_stopSession)));
+
         Intent intent = new Intent(getApplicationContext(), SensorDataService.class);
         // Handling our GUI Elements
-        addButtonOnClickListener(v -> {
-            // Start Smartphone Activity + Start Websocket Backend.
+
+        startButton.setOnClickListener(v -> {
+            setRunning(true);
             Log.i(TAG,"start sensor streaming");
             intent.putExtra(SensorDataService.SENSOR_ACTION_EXTRA, SensorDataService.START_ACTION);
             startService(intent);
-        }, R.id.bt_main_startSession);
+            startButton.setEnabled(!running);
+        });
 
-        addButtonOnClickListener((v) -> {
+        stopButton.setOnClickListener(v -> {
             // Start Smartphone Activity + Start Websocket Backend.
+            setRunning(false);
             Log.i(TAG,"stop sensor streaming");
             intent.putExtra(SensorDataService.SENSOR_ACTION_EXTRA, SensorDataService.STOP_ACTION);
             startService(intent);
-        }, R.id.bt_main_stopSession);
+        });
 
         // Ability to Receive Messages from the MessageService ( WearableListener )
         IntentFilter newFilter = new IntentFilter(Intent.ACTION_SEND);
@@ -82,9 +95,14 @@ public class MainActivity extends WearableActivity {
 
     }
 
-    private void addButtonOnClickListener(View.OnClickListener c, int buttonId) {
-        Optional.ofNullable((Button) findViewById(buttonId))
-                .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", buttonId)))
+    private void setRunning(boolean running) {
+        this.running = running;
+        stopButton.setEnabled(running);
+        startButton.setEnabled(!running);
+    }
+
+    private void addButtonOnClickListener(View.OnClickListener c, Button button) {
+        button
                 .setOnClickListener(c);
     }
 
