@@ -46,6 +46,8 @@
 
         <service android:name=".messageservice.ReplyService"/>
 
+        <service android:name=".sensors.SensorDataService"/>
+
     </application>
 
 </manifest>

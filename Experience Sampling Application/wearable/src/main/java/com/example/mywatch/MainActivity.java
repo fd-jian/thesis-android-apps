@@ -34,7 +34,6 @@ public class MainActivity extends WearableActivity {
     private static final String ACCELEROMETER_MESSAGE_PATH = "/accelerometer_data";
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private TextView mTextView;
     private float[] acc = {0.0F, 0.0F, 0.0F};
 
     private String accelerometerNodeId = null;
@@ -42,7 +41,6 @@ public class MainActivity extends WearableActivity {
     private Handler handler;
     private Runnable updateUi;
 
-    private PowerManager.WakeLock mWakeLock;
     private int messageCounter = 0;
     private long lastMessageReceived = 0;
     private long secondsElapsed = 0;

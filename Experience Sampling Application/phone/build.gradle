@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.mywatch"
+        applicationId "de.dipf.edutec.thriller.experiencesampling"
         minSdkVersion 28
         targetSdkVersion 29
         versionCode 1
@@ -59,9 +59,4 @@ dependencies {
     implementation supportDependencies.lombok
     annotationProcessor supportDependencies.lombok
     testAnnotationProcessor supportDependencies.lombok
-
-//  Mapstruct
-    implementation supportDependencies.mapstruct
-    annotationProcessor supportDependencies.mapstructProcessor
-    testAnnotationProcessor supportDependencies.mapstructProcessor
 }

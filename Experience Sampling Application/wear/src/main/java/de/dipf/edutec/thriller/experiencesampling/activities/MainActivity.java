@@ -10,24 +10,24 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
+import androidx.core.app.ShareCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import java.security.acl.NotOwnerException;
 import java.util.Optional;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
+import de.dipf.edutec.thriller.experiencesampling.messageservice.ReplyService;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.sensors.SensorDataService;
 
 public class MainActivity extends WearableActivity {
 
-    private Button bt_main_startSession;
-    private Button bt_main_stopSession;
+    private static final String TAG = "wear:" + MainActivity.class.getSimpleName().toLowerCase();
 
     @Override
     public void onRestart() {
@@ -48,13 +48,21 @@ public class MainActivity extends WearableActivity {
         // Enables Always-on
         setAmbientEnabled();
 
+        Intent intent = new Intent(getApplicationContext(), SensorDataService.class);
         // Handling our GUI Elements
-        Optional.ofNullable((Button) findViewById(R.id.bt_main_startSession))
-                .orElseThrow(() -> new RuntimeException("Button not found."))
-                .setOnClickListener(v -> {
-                    // TODO
-                    // Start Smartphone Activity + Start Websocket Backend.
-                });
+        addButtonOnClickListener(v -> {
+            // Start Smartphone Activity + Start Websocket Backend.
+            Log.i(TAG,"start sensor streaming");
+            intent.putExtra(SensorDataService.SENSOR_ACTION_EXTRA, SensorDataService.START_ACTION);
+            startService(intent);
+        }, R.id.bt_main_startSession);
+
+        addButtonOnClickListener((v) -> {
+            // Start Smartphone Activity + Start Websocket Backend.
+            Log.i(TAG,"stop sensor streaming");
+            intent.putExtra(SensorDataService.SENSOR_ACTION_EXTRA, SensorDataService.STOP_ACTION);
+            startService(intent);
+        }, R.id.bt_main_stopSession);
 
         // Ability to Receive Messages from the MessageService ( WearableListener )
         IntentFilter newFilter = new IntentFilter(Intent.ACTION_SEND);
@@ -72,6 +80,12 @@ public class MainActivity extends WearableActivity {
 
         createNotificationChannel();
 
+    }
+
+    private void addButtonOnClickListener(View.OnClickListener c, int buttonId) {
+        Optional.ofNullable((Button) findViewById(buttonId))
+                .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", buttonId)))
+                .setOnClickListener(c);
     }
 
     public void createNotificationChannel() {
