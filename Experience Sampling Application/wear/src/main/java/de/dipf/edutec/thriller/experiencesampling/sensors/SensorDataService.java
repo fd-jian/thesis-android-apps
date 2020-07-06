@@ -23,7 +23,7 @@ import java.util.Set;
 public class SensorDataService extends IntentService {
 
     private static final String WEAR_WAKELOCKTAG = "wear:wakelocktag";
-    private static final String TAG = "wear:" + SensorDataService.class.getSimpleName().toLowerCase();
+    private static final String TAG = "wear:" + SensorDataService.class.getSimpleName();
     private static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
     public static final String SENSOR_ACTION_EXTRA = "sensor_action";
     public static final String START_ACTION = "start";
@@ -45,7 +45,7 @@ public class SensorDataService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "creating sensordataservice");
+        Log.d(TAG, "Creating sensordataservice");
         // TODO: on app start, screen is inactive and this still does not work without tapping the screen.
         //  unclear if wakelock even makes a difference....
         Optional.ofNullable((PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE))
@@ -62,7 +62,7 @@ public class SensorDataService extends IntentService {
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        Log.i(TAG,"handling intent");
+        Log.d(TAG,"Handling intent");
         if (intent == null || !intent.hasExtra(SENSOR_ACTION_EXTRA)) {
             Log.w(TAG, "Sensor action must be provided through Intent extra.");
             return;
@@ -91,7 +91,7 @@ public class SensorDataService extends IntentService {
         Optional.ofNullable(Helper.accelerometerListener)
                 .ifPresent(AccelerometerListener::closeStream);
 
-        Log.w(TAG, "unregistered listener");
+        Log.d(TAG, "Unregistered accelerometer listener.");
     }
 
     private void registerListener() {
@@ -122,9 +122,9 @@ public class SensorDataService extends IntentService {
 
     private void updateNodeConfig(CapabilityInfo capabilityInfo) {
         Set<Node> connectedNodes = capabilityInfo.getNodes();
-        Log.w(TAG, "Updating capability: " + capabilityInfo.getName() + ", nodes found: " + connectedNodes.size());
+        Log.d(TAG, "Updating capability: " + capabilityInfo.getName() + ", nodes found: " + connectedNodes.size());
         Helper.accelerometerListener.setAccelerometerNodeId(pickBestNodeId(connectedNodes));
-        Log.w(TAG, "accelerometerNodeId is now " + Helper.accelerometerListener.getAccelerometerNodeId());
+        Log.d(TAG, "AccelerometerNodeId is now " + Helper.accelerometerListener.getAccelerometerNodeId());
     }
 
     private String pickBestNodeId(Set<Node> nodes) {

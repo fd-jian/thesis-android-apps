@@ -29,7 +29,7 @@ public class MainActivity extends WearableActivity {
 
     private boolean running = false;
 
-    private static final String TAG = "wear:" + MainActivity.class.getSimpleName().toLowerCase();
+    private static final String TAG = "wear:" + MainActivity.class.getSimpleName();
     private Button startButton;
     private Button stopButton;
 

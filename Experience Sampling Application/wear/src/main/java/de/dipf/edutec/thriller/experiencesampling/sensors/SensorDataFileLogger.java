@@ -15,7 +15,7 @@ import java.util.Optional;
 
 public class SensorDataFileLogger {
 
-    private static final String TAG = "wear:" + SensorDataFileLogger.class.getSimpleName().toLowerCase();
+    private static final String TAG = "wear:" + SensorDataFileLogger.class.getSimpleName();
     private final File file;
 
     private SensorDataFileLogger(File outputStream) {
@@ -41,9 +41,9 @@ public class SensorDataFileLogger {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(
                 Paths.get(externalFilesDir.getPath()), pathMatcher::matches)) {
             dirStream.forEach(path -> {
-                Log.w(TAG, String.format("Deleting %s", path.toString()));
+                Log.d(TAG, String.format("Deleting %s", path.toString()));
                 if(!path.toFile().delete()){
-                    Log.w(TAG, "Failed to delete old log file.");
+                    Log.d(TAG, "Failed to delete old log file.");
                 }
             });
         } catch (IOException e) {
@@ -56,7 +56,7 @@ public class SensorDataFileLogger {
 
         try {
             if(!file.createNewFile()) {
-                Log.w(TAG, String.format(
+                Log.d(TAG, String.format(
                         "Log file '%s' already exists. Appending new log output to it.",
                         file.getAbsolutePath()));
             };
@@ -66,7 +66,7 @@ public class SensorDataFileLogger {
 
         String absolutePath = file.getAbsolutePath();
 
-        Log.w(TAG, String.format("Created FileOutputStream for file at path: %s", absolutePath));
+        Log.d(TAG, String.format("Created FileOutputStream for file at path: %s", absolutePath));
 
         return new SensorDataFileLogger(file);
     }

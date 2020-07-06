@@ -4,49 +4,31 @@ import android.content.Intent;
 import android.os.Handler;
 import android.util.Log;
 import com.google.android.gms.wearable.*;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class DataLayerListenerService extends WearableListenerService {
-    private static final String TAG = DataLayerListenerService.class.getSimpleName();
-    private static final String ACCELEROMETER_MESSAGE_PATH = "/accelerometer_data";
+    private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
     public static final String ACCELEROMETER = "ACCELEROMETER";
     public static final String MESSAGE_COUNT = "MESSAGE_COUNT";
     public static final String SECONDS_ELAPSED = "SECONDS_ELAPSED";
     public static final String MESSAGES_PER_SECOND = "MESSAGES_PER_SECOND";
-    private static final String LOG = DataLayerListenerService.class.getSimpleName();
     private float[] cachedAccData = {0, 0, 0};
     private int messageCounter = 0;
     private long timestampSeconds = Instant.now().getEpochSecond();
     private long lastMessageReceived;
 
     private MqttService mqttService;
-    private CustomSslSocketFactory socketFactory;
 
     private Handler handler = new Handler();
 
-    private int delay = 500;
+    private static final int BROADCAST_INTERVAL = 500;
     private Runnable sendBroadcastMessage = new Runnable() {
         public void run() {
 
@@ -60,7 +42,7 @@ public class DataLayerListenerService extends WearableListenerService {
                 timestampSeconds = newTimestamp;
             }
 
-            Log.d(TAG, "sending broadcast message for ui");
+            Log.v(TAG, "sending broadcast message for ui");
             Intent local = new Intent();
             local.setAction("com.hello.action");
             local.putExtra(ACCELEROMETER, Arrays.toString(cachedAccData));
@@ -69,23 +51,27 @@ public class DataLayerListenerService extends WearableListenerService {
             local.putExtra(MESSAGES_PER_SECOND, Float.toString(messagesPerSecond));
             sendBroadcast(local);
 
-            handler.postDelayed(this, delay);
+            handler.postDelayed(this, BROADCAST_INTERVAL);
         }
     };
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "on start command");
+
+        mqttService.connect();
+
         //  Update UI with accelerometer data and send it to handheld device every 2 seconds
-        handler.postDelayed(sendBroadcastMessage, delay);
+        handler.postDelayed(sendBroadcastMessage, BROADCAST_INTERVAL);
 
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
-        handler.removeCallbacks(sendBroadcastMessage);
         super.onDestroy();
+        handler.removeCallbacks(sendBroadcastMessage);
+        this.mqttService.disconnect();
     }
 
     @Override
@@ -106,7 +92,7 @@ public class DataLayerListenerService extends WearableListenerService {
         lastMessageReceived = now.getEpochSecond();
 
         if (!mqttService.isConnected()) {
-            mqttService.connect();
+            return;
         }
 
         JSONObject sample = new JSONObject();
@@ -127,8 +113,9 @@ public class DataLayerListenerService extends WearableListenerService {
         super.onCreate();
         this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
 
-        if(mqttService == null) {
+        if (mqttService == null) {
             throw new RuntimeException();
         }
+
     }
 }

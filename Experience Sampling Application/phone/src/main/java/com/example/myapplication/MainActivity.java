@@ -58,22 +58,22 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 // update UI
                 String accelerometerData = intent.getStringExtra(DataLayerListenerService.ACCELEROMETER);
-                Log.w(TAG, accelerometerData);
+                Log.v(TAG, accelerometerData);
                 accelerometerDataView.setText(accelerometerData);
 
                 String messageCount = String.format("%d messages received",
                         Integer.parseInt(intent.getStringExtra(DataLayerListenerService.MESSAGE_COUNT)));
-                Log.w(TAG, messageCount);
+                Log.v(TAG, messageCount);
                 messageCountView.setText(messageCount);
 
                 String secondsElapsed = String.format("%d seconds elapsed",
                         Long.parseLong(intent.getStringExtra(DataLayerListenerService.SECONDS_ELAPSED)));
-                Log.w(TAG, secondsElapsed);
+                Log.v(TAG, secondsElapsed);
                 secondsElapsedView.setText(secondsElapsed);
 
                 String messagesPerSecond = String.format("%.2f messages/second",
                         Float.parseFloat(intent.getStringExtra(DataLayerListenerService.MESSAGES_PER_SECOND)));
-                Log.w(TAG, messagesPerSecond);
+                Log.v(TAG, messagesPerSecond);
                 messagesPerSecondView.setText(messagesPerSecond);
             }
         };

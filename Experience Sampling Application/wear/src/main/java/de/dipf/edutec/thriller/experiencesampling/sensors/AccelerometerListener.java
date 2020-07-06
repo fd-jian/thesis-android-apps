@@ -17,7 +17,7 @@ import java.util.Optional;
 public class AccelerometerListener implements SensorEventListener {
 
     private static final String ACCELEROMETER_MESSAGE_PATH = "/accelerometer_data";
-    public static final String TAG = "wear:" + AccelerometerListener.class.getSimpleName().toLowerCase();
+    public static final String TAG = "wear:" + AccelerometerListener.class.getSimpleName();
 
     private final MessageClient messageClient;
 //    private float[] acc = {0.0F, 0.0F, 0.0F};
