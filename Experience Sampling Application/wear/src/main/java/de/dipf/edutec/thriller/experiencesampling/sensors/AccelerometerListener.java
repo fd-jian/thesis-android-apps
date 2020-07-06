@@ -1,7 +1,6 @@
 package de.dipf.edutec.thriller.experiencesampling.sensors;
 
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
+import android.hardware.Sensor; import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.util.Log;
 import com.google.android.gms.wearable.MessageClient;
@@ -20,34 +19,29 @@ public class AccelerometerListener implements SensorEventListener {
     public static final String TAG = "wear:" + AccelerometerListener.class.getSimpleName();
 
     private final MessageClient messageClient;
-//    private float[] acc = {0.0F, 0.0F, 0.0F};
+    private final SensorDataFileLogger sensorDataFileLogger;
+    private OutputStream outputStream;
+
+    // reuse these field values to avoid reinstantiation
+    private final ByteBuffer byteBuffer = ByteBuffer.allocate(4);
+    private final byte[] recordBytes = new byte[12];
+    private final byte[] floatBytes = new byte[4];
+    private float[] values;
 
     @Setter
     @Getter
     private String accelerometerNodeId;
 
-//    private int messageCounter = 0;
-//    private long lastMessageReceived = 0;
-//    private long secondsElapsed = 0;
-//    private long prevTimestamp = Instant.now().getEpochSecond();
-//    private float messagesPerSecond = 0F;
-
-    private final SensorDataFileLogger sensorDataFileLogger;
-    private OutputStream outputStream;
-
     public AccelerometerListener(MessageClient messageClient, SensorDataFileLogger sensorDataFileLogger) {
         this.messageClient = messageClient;
         this.sensorDataFileLogger = sensorDataFileLogger;
-//        sensorDataFileLogger.log(DateTimeFormatter
-//                .ofPattern("yyyy-MM-dd'T'hh:mm:ss")
-//                .format(ZonedDateTime.now()) + " -- TEST\n");
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        float[] values = event.values;
+        values = event.values;
         messageClient.sendMessage(accelerometerNodeId,
-                ACCELEROMETER_MESSAGE_PATH, getSensorBytes(values));
+                ACCELEROMETER_MESSAGE_PATH, getRecordBytes(values));
 
         Optional.ofNullable(outputStream).orElseGet(() ->
                 outputStream = sensorDataFileLogger.getOutputStream());
@@ -58,8 +52,6 @@ public class AccelerometerListener implements SensorEventListener {
             e.printStackTrace();
         }
 
-//        ++messageCounter;
-//        lastMessageReceived = Instant.now().toEpochMilli();
     }
 
     @Override
@@ -67,13 +59,15 @@ public class AccelerometerListener implements SensorEventListener {
         Log.i(TAG, "Accuracy of Accelerometer changed.");
     }
 
-    private byte[] getSensorBytes(float[] accelerometerValues) {
-        byte[] res = new byte[12];
+    private byte[] getRecordBytes(float[] accelerometerValues) {
         for (int i = 0; i < accelerometerValues.length; i++) {
-            byte[] buff = ByteBuffer.allocate(4).putFloat(accelerometerValues[i]).array();
-            System.arraycopy(buff, 0, res, i * 4, buff.length);
+            byteBuffer.putFloat(accelerometerValues[i]).position(0);
+            byteBuffer.get(floatBytes);
+            System.arraycopy(floatBytes, 0, recordBytes, i * 4, floatBytes.length);
+            byteBuffer.position(0);
         }
-        return res;
+
+        return recordBytes;
     }
 
     public void closeStream() {

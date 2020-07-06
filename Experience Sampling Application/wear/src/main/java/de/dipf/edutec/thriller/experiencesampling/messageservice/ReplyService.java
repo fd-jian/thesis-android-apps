@@ -31,7 +31,7 @@ public class ReplyService extends IntentService {
                 System.out.println("RECIEVED JUST START ACT");
 
                 Intent intent1 = new Intent();
-                intent1.setClassName(MainActivity.class.getPackage().getName(), MainActivity.class.getName());
+                intent1.setClassName(this.getPackageName(), MainActivity.class.getName());
                 intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent1.putExtra("bool",true);
                 intent1.putExtra("message",intent.getStringExtra("receivedMessageFromHandheld"));
