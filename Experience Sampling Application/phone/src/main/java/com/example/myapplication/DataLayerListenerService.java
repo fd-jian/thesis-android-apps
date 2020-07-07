@@ -1,7 +1,12 @@
 package com.example.myapplication;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.util.Log;
 import com.google.android.gms.wearable.*;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -12,20 +17,22 @@ import org.json.JSONObject;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Optional;
 
 public class DataLayerListenerService extends WearableListenerService {
-    private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
     public static final String ACCELEROMETER = "ACCELEROMETER";
     public static final String MESSAGE_COUNT = "MESSAGE_COUNT";
     public static final String SECONDS_ELAPSED = "SECONDS_ELAPSED";
     public static final String MESSAGES_PER_SECOND = "MESSAGES_PER_SECOND";
+
+    private static final String WEAR_WAKELOCKTAG = "wear:wakelocktag";
+    private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
     private float[] cachedAccData = {0, 0, 0};
     private int messageCounter = 0;
     private long timestampSeconds = Instant.now().getEpochSecond();
     private long lastMessageReceived;
 
     private MqttService mqttService;
-
     private Handler handler = new Handler();
 
     private static final int BROADCAST_INTERVAL = 500;
@@ -59,12 +66,31 @@ public class DataLayerListenerService extends WearableListenerService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "on start command");
 
+        Optional.ofNullable((PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE))
+                .map(pm -> pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WEAR_WAKELOCKTAG))
+                .ifPresent(PowerManager.WakeLock::acquire);
+
+        Optional.ofNullable(getSystemService(NotificationManager.class))
+                .orElseThrow(() -> new RuntimeException("could not find Notification manager."))
+                .createNotificationChannel(
+                        new NotificationChannel(
+                                "f1",
+                                "foreground",
+                                NotificationManager.IMPORTANCE_LOW));
+
+        startForeground(1337, new Notification.Builder(this, "f1")
+                .setOngoing(true)
+                .setContentTitle("streaming sensor data")
+//                .setSmallIcon(...)
+//                .setTicker(...)
+                .build());
+
         mqttService.connect();
 
         //  Update UI with accelerometer data and send it to handheld device every 2 seconds
         handler.postDelayed(sendBroadcastMessage, BROADCAST_INTERVAL);
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     @Override
@@ -72,6 +98,7 @@ public class DataLayerListenerService extends WearableListenerService {
         super.onDestroy();
         handler.removeCallbacks(sendBroadcastMessage);
         this.mqttService.disconnect();
+        stopForeground(true);
     }
 
     @Override
@@ -92,6 +119,7 @@ public class DataLayerListenerService extends WearableListenerService {
         lastMessageReceived = now.getEpochSecond();
 
         if (!mqttService.isConnected()) {
+            Log.d(TAG, "mqtt broker is not connected");
             return;
         }
 
