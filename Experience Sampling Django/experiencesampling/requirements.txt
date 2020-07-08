@@ -1,0 +1,6 @@
+Django
+channels
+asgi-redis
+asgi_redis
+channels_redis
+gunicorn
