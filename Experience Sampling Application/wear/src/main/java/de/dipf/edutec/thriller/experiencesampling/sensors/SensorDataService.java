@@ -27,11 +27,10 @@ import java.util.Set;
 
 public class SensorDataService extends Service {
 
-    public static final String SENSOR_ACTION_EXTRA = "sensor_action";
     public static final String START_ACTION = "start";
     public static final String STOP_ACTION = "stop";
 
-    public static final String WEAR_WAKELOCKTAG = "wear:wakelocktag";
+    public static final String WEAR_WAKELOCKTAG = "wear:wakelock-service";
     private static final String TAG = "wear:" + SensorDataService.class.getSimpleName();
     private static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
 
@@ -41,6 +40,7 @@ public class SensorDataService extends Service {
 
     private final Map<String, Runnable> actions = new HashMap<>();
     private final CapabilityClient.OnCapabilityChangedListener updateNodeConfig = this::updateNodeConfig;
+    private PowerManager.WakeLock wakeLock;
 
     public SensorDataService() {
         actions.put(START_ACTION, this::startStreaming);
@@ -64,8 +64,12 @@ public class SensorDataService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Handling intent");
 
-        Optional.ofNullable((PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE))
+        wakeLock = Optional.ofNullable((PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE))
                 .map(pm -> pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WEAR_WAKELOCKTAG))
+                .orElse(null);
+
+        Optional.ofNullable(wakeLock)
+                .filter(wakeLock1 -> !wakeLock1.isHeld())
                 .ifPresent(PowerManager.WakeLock::acquire);
 
         Optional.ofNullable(getSystemService(NotificationManager.class))
@@ -97,6 +101,9 @@ public class SensorDataService extends Service {
         stopForeground(true);
         LocalBroadcastManager.getInstance(this)
                 .sendBroadcast(new Intent("sensor-service-destroyed"));
+        Optional.ofNullable(wakeLock)
+                .filter(PowerManager.WakeLock::isHeld)
+                .ifPresent(PowerManager.WakeLock::release);
     }
 
 

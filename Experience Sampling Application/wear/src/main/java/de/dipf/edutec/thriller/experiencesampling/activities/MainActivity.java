@@ -22,6 +22,7 @@ import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
 import de.dipf.edutec.thriller.experiencesampling.sensors.Helper;
 import de.dipf.edutec.thriller.experiencesampling.sensors.SensorDataService;
+import lombok.Builder;
 
 import java.util.Optional;
 
@@ -29,17 +30,23 @@ import static de.dipf.edutec.thriller.experiencesampling.sensors.SensorDataServi
 
 public class MainActivity extends WearableActivity {
 
+//    private static final String WEAR_WAKELOCKTAG = "wear:wakelock-activity";
     private boolean running = false;
 
     private static final String TAG = "wear:" + MainActivity.class.getSimpleName();
     private Button startButton;
     private Button stopButton;
+//    private PowerManager.WakeLock wakeLock;
 
     @Override
     public void onRestart() {
         super.onRestart();
-        setRunning(Helper.accelerometerListener != null);
         Log.d(TAG, "onResume called");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
@@ -50,16 +57,22 @@ public class MainActivity extends WearableActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate called");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Enables Always-on
         setAmbientEnabled();
-
-        Optional.ofNullable((PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE))
-                .map(pm -> pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WEAR_WAKELOCKTAG))
-                .ifPresent(PowerManager.WakeLock::acquire);
 
         startButton = Optional.ofNullable((Button) findViewById(R.id.bt_main_startSession))
                 .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", R.id.bt_main_startSession)));

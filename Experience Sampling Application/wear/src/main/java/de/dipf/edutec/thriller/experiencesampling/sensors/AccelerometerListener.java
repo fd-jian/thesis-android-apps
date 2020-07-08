@@ -1,6 +1,7 @@
 package de.dipf.edutec.thriller.experiencesampling.sensors;
 
-import android.hardware.Sensor; import android.hardware.SensorEvent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.util.Log;
 import com.google.android.gms.wearable.MessageClient;
@@ -43,11 +44,13 @@ public class AccelerometerListener implements SensorEventListener {
         messageClient.sendMessage(accelerometerNodeId,
                 ACCELEROMETER_MESSAGE_PATH, getRecordBytes(values));
 
-        Optional.ofNullable(outputStream).orElseGet(() ->
-                outputStream = sensorDataFileLogger.getOutputStream());
+        String out = Arrays.toString(values).replaceAll("[\\[\\] ]", "") + "\n";
+        Log.v(TAG, String.format("sensor data record: %s", Arrays.toString(values)));
 
         try {
-            outputStream.write((Arrays.toString(values).replaceAll("[\\[\\] ]", "") + "\n").getBytes());
+            Optional.ofNullable(outputStream)
+                    .orElseGet(() -> outputStream = sensorDataFileLogger.getOutputStream())
+                    .write(out.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -71,7 +74,7 @@ public class AccelerometerListener implements SensorEventListener {
     }
 
     public void closeStream() {
-        if(outputStream == null) {
+        if (outputStream == null) {
             return;
         }
         try {

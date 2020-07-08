@@ -133,7 +133,9 @@ public class DataLayerListenerService extends WearableListenerService {
             e.printStackTrace();
         }
 
-        mqttService.sendMessage("123", sample.toString().getBytes());
+        String message = sample.toString();
+        Log.v(TAG, String.format("sending MQTT message with payload: %s", message));
+        mqttService.sendMessage("123", message.getBytes());
     }
 
     @Override
