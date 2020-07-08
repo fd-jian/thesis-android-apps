@@ -36,18 +36,13 @@ import pl.droidsonroids.gif.GifImageView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    // Static
-    String PATH_SMARTWATCH_TEST;
 
 
     // GUI Elements
     GifImageButton dummy2;
     Button bt_settings, bt_database, bt_smartwatch, bt_testing, bt_info, bt_wearos;
 
-    // WebSockets
-    OkHttpClient client;
-    WebSocket ws;
-    MessagesSingleton messagesSingleton;
+
 
 
     @Override
@@ -59,11 +54,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Receiver receiver = new Receiver(this);
 
-        PATH_SMARTWATCH_TEST = getResources().getString(R.string.PATH_TOSMARTWATCH_TEST);
 
-        client = new OkHttpClient();
-        messagesSingleton = MessagesSingleton.getInstance();
-        start();
+
     }
 
 
@@ -140,71 +132,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    void start() {
-
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        System.out.println(sp.getAll());
-        String lobby = sp.getString("signature","defaultChannel");
-
-        Request request = new Request.Builder().url("ws://192.168.2.107:8000/ws/chat/"+lobby+"/").build();
-        EchoWebSocketListener listener = new EchoWebSocketListener();
-        ws = client.newWebSocket(request, listener);
-        //client.dispatcher().executorService().shutdown();
-    }
-
-    void sendMsgTest(final String text){
-
-        final String msg = text;
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(MyMessage.isTypeMyMessage(msg)){
-                    try{
-
-                        JSONObject reader = new JSONObject(msg);
-                        System.out.println(reader);
-                        String msg = reader.getString("message");
-                        final MyMessage myMessage = MyMessage.decodeMessage(msg);
-                        SendMessage messageService = new SendMessage(MainActivity.this);
-                        messageService.sendMessage(PATH_SMARTWATCH_TEST,myMessage);
-
-                        messagesSingleton.registerListener(new MessagesSingleton.Listener() {
-                            @Override
-                            public String onStateChange(String uuid) {
-
-                                System.out.println("onStateChange is called " + uuid + "  " + myMessage.getUuid());
-
-                                if(myMessage.getUuid().equals(uuid)){
-                                    JSONObject obj = new JSONObject();
-                                    try {
-                                        obj.put("message" , messagesSingleton.getMyMessageByUUID(uuid));
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                    ws.send(obj.toString());
-
-                                    messagesSingleton.unregisterListener();
-                                }
-
-                                return null;
-                            }
-                        });
-
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
-
-                } else {
-
-                    System.out.println("Websocket Message: " + text);
-
-                }
-            }
-        });
-
-
-
         /*
         try{
             MyMessage myMessage = MyMessage.decodeMessage(text);
@@ -218,56 +145,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         */
 
-    }
 
-    private final class EchoWebSocketListener extends WebSocketListener {
 
-        private static final int NORMAL_CLOSURE_STATUS = 1000;
 
-        @Override
-        public void onOpen(WebSocket webSocket, Response response) {
-            Log.d("MainActivity TAG ", "onOpen() is called.");
-            JSONObject obj = new JSONObject();
-            try {
-                obj.put("message" , "Smartphone opened Connection");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            webSocket.send(obj.toString());
-
-            getSupportActionBar().setIcon(R.drawable.icon_correct);
-
-        }
-
-        @Override
-        public void onMessage(WebSocket webSocket, String text) {
-            sendMsgTest(text);
-
-        }
-
-        @Override
-        public void onMessage(WebSocket webSocket, ByteString bytes) {
-            Log.d("MainActivity TAG ", "onMessage() for ByteString is called.");
-
-        }
-
-        @Override
-        public void onClosing(WebSocket webSocket, int code, String reason) {
-            webSocket.send("Smartphone closed Connection");
-            Log.d("MainActivity TAG ", "onClosing() is called.");
-            System.out.println("Reason " + reason);
-            webSocket.close(NORMAL_CLOSURE_STATUS, null);
-
-        }
-
-        @Override
-        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-            Log.d("MainActivity TAG ", "onFailure() is called.");
-            System.out.println(t);
-            System.out.println(response);
-
-        }
-    }
 }
 

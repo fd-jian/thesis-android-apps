@@ -30,6 +30,7 @@
                     android:scheme="wear" />
             </intent-filter>
         </service>
+        <service android:name=".messageservice.WebSocketService" />
 
         <activity
             android:name=".activities.TestingActivity"
