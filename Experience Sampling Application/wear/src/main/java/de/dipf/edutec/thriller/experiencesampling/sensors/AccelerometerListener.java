@@ -4,6 +4,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.util.Log;
+import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.MessageClient;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,14 +13,17 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
+// TODO: consider moving logic of this class to SensorDataService for ease of management (e.g. close streams).
 public class AccelerometerListener implements SensorEventListener {
 
-    private static final String ACCELEROMETER_MESSAGE_PATH = "/accelerometer_data";
     public static final String TAG = "wear:" + AccelerometerListener.class.getSimpleName();
 
-    private final MessageClient messageClient;
+    @Setter
+    private OutputStream channelOutput;
     private final SensorDataFileLogger sensorDataFileLogger;
     private OutputStream outputStream;
 
@@ -33,16 +37,23 @@ public class AccelerometerListener implements SensorEventListener {
     @Getter
     private String accelerometerNodeId;
 
-    public AccelerometerListener(MessageClient messageClient, SensorDataFileLogger sensorDataFileLogger) {
-        this.messageClient = messageClient;
+    public AccelerometerListener(SensorDataFileLogger sensorDataFileLogger) {
         this.sensorDataFileLogger = sensorDataFileLogger;
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         values = event.values;
-        messageClient.sendMessage(accelerometerNodeId,
-                ACCELEROMETER_MESSAGE_PATH, getRecordBytes(values));
+
+        // TODO: what to do if stream is closed from other device? how to reopen?
+        try {
+            if(channelOutput != null) {
+                channelOutput.write(getRecordBytes(values));
+                channelOutput.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         String out = Arrays.toString(values).replaceAll("[\\[\\] ]", "") + "\n";
         Log.v(TAG, String.format("sensor data record: %s", Arrays.toString(values)));
@@ -74,6 +85,10 @@ public class AccelerometerListener implements SensorEventListener {
     }
 
     public void closeStream() {
+        Stream.of(outputStream, channelOutput).forEach(this::closeStream);
+    }
+
+    private void closeStream(OutputStream outputStream) {
         if (outputStream == null) {
             return;
         }

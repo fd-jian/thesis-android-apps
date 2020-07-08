@@ -8,12 +8,16 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
-import com.google.android.gms.wearable.*;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
+import com.google.android.gms.wearable.ChannelClient;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Wearable;
+import com.google.android.gms.wearable.WearableListenerService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Arrays;
@@ -81,8 +85,6 @@ public class DataLayerListenerService extends WearableListenerService {
         startForeground(1337, new Notification.Builder(this, "f1")
                 .setOngoing(true)
                 .setContentTitle("streaming sensor data")
-//                .setSmallIcon(...)
-//                .setTicker(...)
                 .build());
 
         mqttService.connect();
@@ -103,15 +105,13 @@ public class DataLayerListenerService extends WearableListenerService {
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-
         byte[] data = messageEvent.getData();
 
-        float[] floats = new float[3];
-        byte[] tempChunk = new byte[4];
-        for (int i = 0; i < 12; i += 4) {
-            System.arraycopy(data, i, tempChunk, 0, 4);
-            floats[i / 4] = ByteBuffer.wrap(tempChunk).getFloat();
-        }
+        handleRecord(data);
+    }
+
+    private void handleRecord(byte[] data) {
+        float[] floats = getFloats(data);
 
         cachedAccData = floats;
         ++messageCounter;
@@ -136,6 +136,50 @@ public class DataLayerListenerService extends WearableListenerService {
         String message = sample.toString();
         Log.v(TAG, String.format("sending MQTT message with payload: %s", message));
         mqttService.sendMessage("123", message.getBytes());
+    }
+
+    private float[] getFloats(byte[] data) {
+        float[] floats = new float[3];
+        byte[] tempChunk = new byte[4];
+        for (int i = 0; i < 12; i += 4) {
+            System.arraycopy(data, i, tempChunk, 0, 4);
+            floats[i / 4] = ByteBuffer.wrap(tempChunk).getFloat();
+        }
+        return floats;
+    }
+
+    @Override
+    public void onChannelOpened(ChannelClient.Channel channel) {
+        Log.d(TAG, "channel opened!");
+
+        Wearable.getChannelClient(this)
+                .getInputStream(channel)
+                .addOnSuccessListener(command -> {
+
+                    // without new thread, UI hangs. but why? this is supposed to run on a separate thread!
+                    // TODO: consider finding a more elegant solution
+                    new Thread(() -> {
+                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                        Log.v(TAG, "input stream retrieved succesfully. Reading in new thread.");
+                        try {
+                            readStream(command);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                });
+    }
+
+    private void readStream(InputStream command) throws IOException {
+        byte[] data = new byte[12];
+        ByteArrayOutputStream tempBaos = new ByteArrayOutputStream(data.length);
+        int c;
+        Log.d(TAG, "start reading input stream");
+        while ((c = command.read(data, 0, data.length)) != -1) {
+            tempBaos.write(data, 0, c);
+            handleRecord(tempBaos.toByteArray());
+            tempBaos.reset();
+        }
     }
 
     @Override

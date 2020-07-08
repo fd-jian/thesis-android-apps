@@ -5,47 +5,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.wearable.CapabilityClient;
-import com.google.android.gms.wearable.CapabilityInfo;
-import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.Wearable;
-import de.dipf.edutec.thriller.experiencesampling.R;
+import com.google.android.gms.wearable.*;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 
 public class SensorDataService extends Service {
 
-    public static final String START_ACTION = "start";
-    public static final String STOP_ACTION = "stop";
-
     public static final String WEAR_WAKELOCKTAG = "wear:wakelock-service";
     private static final String TAG = "wear:" + SensorDataService.class.getSimpleName();
     private static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
 
-//    private AccelerometerListener accelerometerListener;
-//    private SensorManager sensorManager;
-//    private CapabilityClient capabilityClient;
-
-    private final Map<String, Runnable> actions = new HashMap<>();
     private final CapabilityClient.OnCapabilityChangedListener updateNodeConfig = this::updateNodeConfig;
     private PowerManager.WakeLock wakeLock;
-
-    public SensorDataService() {
-        actions.put(START_ACTION, this::startStreaming);
-        actions.put(STOP_ACTION, this::stopStreaming);
-    }
 
     @Override
     public void onCreate() {
@@ -87,41 +66,8 @@ public class SensorDataService extends Service {
 //                .setTicker(...)
                 .build());
 
-
-        startStreaming();
-
-        return START_STICKY;
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.d(TAG, "calling onDestroy");
-        super.onDestroy();
-        stopStreaming();
-        stopForeground(true);
-        LocalBroadcastManager.getInstance(this)
-                .sendBroadcast(new Intent("sensor-service-destroyed"));
-        Optional.ofNullable(wakeLock)
-                .filter(PowerManager.WakeLock::isHeld)
-                .ifPresent(PowerManager.WakeLock::release);
-    }
-
-
-//    @Override
-//    protected void onHandleIntent(@Nullable Intent intent) {
-//        Log.d(TAG,"Handling intent");
-//        if (intent == null || !intent.hasExtra(SENSOR_ACTION_EXTRA)) {
-//            Log.w(TAG, "Sensor action must be provided through Intent extra.");
-//            return;
-//        }
-//
-//        actions.get(intent.getStringExtra("sensor_action")).run();
-//    }
-
-    private void startStreaming() {
         SensorDataFileLogger sensorDataFileLogger = SensorDataFileLogger.create(getApplicationContext());
-        Helper.accelerometerListener = new AccelerometerListener(
-                Wearable.getMessageClient(this.getApplicationContext()), sensorDataFileLogger);
+        Helper.accelerometerListener = new AccelerometerListener(sensorDataFileLogger);
 
         if (Helper.accelerometerListener.getAccelerometerNodeId() != null) {
             registerListener();
@@ -130,22 +76,42 @@ public class SensorDataService extends Service {
                     .addOnSuccessListener(command -> registerListener());
         }
 
+        return START_STICKY;
     }
 
-    private void stopStreaming() {
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "calling onDestroy");
+        super.onDestroy();
         Helper.sensorManager.unregisterListener(Helper.accelerometerListener, Helper.accelerometer);
+        Log.d(TAG, "Unregistered accelerometer listener.");
 
         Optional.ofNullable(Helper.accelerometerListener)
                 .ifPresent(AccelerometerListener::closeStream);
-
         Helper.accelerometerListener = null;
 
-        Log.d(TAG, "Unregistered accelerometer listener.");
+        stopForeground(true);
+
+        Optional.ofNullable(wakeLock)
+                .filter(PowerManager.WakeLock::isHeld)
+                .ifPresent(PowerManager.WakeLock::release);
+
+        LocalBroadcastManager.getInstance(this)
+                .sendBroadcast(new Intent("sensor-service-destroyed"));
     }
 
     private void registerListener() {
         Helper.accelerometer = Optional.ofNullable(Helper.sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION))
                 .orElseThrow(() -> new RuntimeException("Could not get default Sensor."));
+
+        // TODO: is this really the right place to do this?
+        ChannelClient channelClient = Wearable.getChannelClient(getApplicationContext());
+        channelClient.openChannel(Helper.accelerometerListener.getAccelerometerNodeId(), "/accelerometer_data")
+                .addOnSuccessListener(channel -> channelClient.getOutputStream(channel)
+                        .addOnSuccessListener(outputStream ->
+                                Helper.accelerometerListener.setChannelOutput(outputStream))
+                );
+
         if (!Helper.sensorManager.registerListener(
                 Helper.accelerometerListener,
                 Helper.accelerometer,
