@@ -1,4 +1,4 @@
-package de.dipf.edutec.thriller.experiencesampling.sensors;
+package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
 import android.app.*;
 import android.content.Context;
@@ -104,7 +104,7 @@ public class SensorDataService extends Service {
         Helper.accelerometer = Optional.ofNullable(Helper.sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION))
                 .orElseThrow(() -> new RuntimeException("Could not get default Sensor."));
 
-        // TODO: is this really the right place to do this?
+        // TODO: try moving this to updateNoteConfig to always open new channel if new node is picked.
         ChannelClient channelClient = Wearable.getChannelClient(getApplicationContext());
         channelClient.openChannel(Helper.accelerometerListener.getAccelerometerNodeId(), "/accelerometer_data")
                 .addOnSuccessListener(channel -> channelClient.getOutputStream(channel)

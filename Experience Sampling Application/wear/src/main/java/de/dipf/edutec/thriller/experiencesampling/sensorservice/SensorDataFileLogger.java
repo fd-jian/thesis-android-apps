@@ -1,4 +1,4 @@
-package de.dipf.edutec.thriller.experiencesampling.sensors;
+package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
 import android.content.Context;
 import android.os.Environment;

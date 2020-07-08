@@ -1,11 +1,9 @@
-package de.dipf.edutec.thriller.experiencesampling.sensors;
+package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.util.Log;
-import com.google.android.gms.wearable.ChannelClient;
-import com.google.android.gms.wearable.MessageClient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +11,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -93,6 +90,7 @@ public class AccelerometerListener implements SensorEventListener {
             return;
         }
         try {
+            outputStream.flush();
             outputStream.close();
         } catch (IOException e) {
             throw new RuntimeException(e);

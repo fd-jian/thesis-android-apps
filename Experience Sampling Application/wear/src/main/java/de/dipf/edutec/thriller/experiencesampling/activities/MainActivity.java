@@ -11,32 +11,23 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
-import de.dipf.edutec.thriller.experiencesampling.sensors.Helper;
-import de.dipf.edutec.thriller.experiencesampling.sensors.SensorDataService;
-import lombok.Builder;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.Helper;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.SensorDataService;
 
 import java.util.Optional;
 
-import static de.dipf.edutec.thriller.experiencesampling.sensors.SensorDataService.WEAR_WAKELOCKTAG;
-
 public class MainActivity extends WearableActivity {
-
-//    private static final String WEAR_WAKELOCKTAG = "wear:wakelock-activity";
-    private boolean running = false;
 
     private static final String TAG = "wear:" + MainActivity.class.getSimpleName();
     private Button startButton;
     private Button stopButton;
-//    private PowerManager.WakeLock wakeLock;
 
     @Override
     public void onRestart() {
@@ -127,14 +118,8 @@ public class MainActivity extends WearableActivity {
 
     private void setRunning(boolean running) {
         Log.d(TAG, "setting running to " + running);
-        this.running = running;
         stopButton.setEnabled(running);
         startButton.setEnabled(!running);
-    }
-
-    private void addButtonOnClickListener(View.OnClickListener c, Button button) {
-        button
-                .setOnClickListener(c);
     }
 
     public void createNotificationChannel() {
@@ -159,7 +144,4 @@ public class MainActivity extends WearableActivity {
 
     }
 
-    public void findGUIElements() {
-
-    }
 }

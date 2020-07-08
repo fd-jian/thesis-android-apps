@@ -1,4 +1,4 @@
-package de.dipf.edutec.thriller.experiencesampling.sensors;
+package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
 import android.hardware.Sensor;
 import android.hardware.SensorManager;

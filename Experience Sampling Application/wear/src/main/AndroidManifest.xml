@@ -47,7 +47,7 @@
 
         <service android:name=".messageservice.ReplyService"/>
 
-        <service android:name=".sensors.SensorDataService"/>
+        <service android:name=".sensorservice.SensorDataService"/>
 
     </application>
 
