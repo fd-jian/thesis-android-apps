@@ -1,6 +1,7 @@
 package de.dipf.edutec.thriller.experiencesampling.conf;
 
 import android.app.Application;
+import android.app.NotificationManager;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import lombok.Getter;
 
@@ -11,6 +12,6 @@ public class CustomApplication extends Application {
    @Override
    public void onCreate() {
       super.onCreate();
-      this.context = new ApplicationContext(getApplicationContext(), R.raw.ca);
+      this.context = new ApplicationContext(getApplicationContext(), getSystemService(NotificationManager.class), R.raw.ca);
    }
 }

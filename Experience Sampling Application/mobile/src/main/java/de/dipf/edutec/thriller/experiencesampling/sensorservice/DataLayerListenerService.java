@@ -1,11 +1,7 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
 import com.google.android.gms.wearable.ChannelClient;
@@ -14,6 +10,7 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
+import de.dipf.edutec.thriller.experiencesampling.support.ForegroundNotificationCreator;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -22,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Optional;
 
 public class DataLayerListenerService extends WearableListenerService {
@@ -31,6 +27,7 @@ public class DataLayerListenerService extends WearableListenerService {
     private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
 
     private MqttService mqttService;
+    private ForegroundNotificationCreator fgNotificationManager;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -40,18 +37,9 @@ public class DataLayerListenerService extends WearableListenerService {
                 .map(pm -> pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WEAR_WAKELOCKTAG))
                 .ifPresent(PowerManager.WakeLock::acquire);
 
-        Optional.ofNullable(getSystemService(NotificationManager.class))
-                .orElseThrow(() -> new RuntimeException("could not find Notification manager."))
-                .createNotificationChannel(
-                        new NotificationChannel(
-                                "f1",
-                                "foreground",
-                                NotificationManager.IMPORTANCE_LOW));
-
-        startForeground(1337, new Notification.Builder(this, "f1")
-                .setOngoing(true)
-                .setContentTitle("streaming sensor data")
-                .build());
+        startForeground(
+                fgNotificationManager.getGetId(),
+                fgNotificationManager.getNotification());
 
         mqttService.connect();
 
@@ -145,8 +133,10 @@ public class DataLayerListenerService extends WearableListenerService {
     public void onCreate() {
         super.onCreate();
         this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
+        this.fgNotificationManager =
+                ((CustomApplication) getApplication()).getContext().getForegroundNotificationCreator();
 
-        if (mqttService == null) {
+        if (mqttService == null || fgNotificationManager == null) {
             throw new RuntimeException();
         }
 

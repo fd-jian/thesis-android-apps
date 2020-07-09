@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //getSupportActionBar().setDisplayUseLogoEnabled(true);
 
         Receiver receiver = new Receiver(this);
-        startService(new Intent(this, WebSocketService.class));
+        startForegroundService(new Intent(this, WebSocketService.class));
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mConnectionReceiver,
                 new IntentFilter("connection-state-changed"));
@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // automatic start via manifest file did not work with stable mqtt connection. Needs to be started as a
         // foreground service.
         Intent intent = new Intent(this, DataLayerListenerService.class);
-        startService(intent);
+        startForegroundService(intent);
     }
 
     // instantiate GUI Elements
