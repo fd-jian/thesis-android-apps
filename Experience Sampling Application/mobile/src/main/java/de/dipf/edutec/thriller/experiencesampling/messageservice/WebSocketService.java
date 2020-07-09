@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
 import org.json.JSONException;
@@ -104,10 +105,16 @@ public class WebSocketService extends Service {
 
         } else {
             System.out.println("Websocket Message: " + text);
+
         }
     }
 
-
+    void sendConnectionUpdate(String isConnected){
+        Intent intent = new Intent("connection-state-changed");
+        // You can also include some extra data.
+        intent.putExtra("message", isConnected);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
 
 
@@ -126,10 +133,19 @@ public class WebSocketService extends Service {
             }
 
             webSocket.send(obj.toString());
+            sendConnectionUpdate("true");
         }
 
         @Override
         public void onMessage(WebSocket webSocket, String text) {
+
+            if(MyMessage.isTypeMyMessage(text)){
+                MessagesSingleton.getInstance().numOpenMessages += 1;
+                Intent intent = new Intent("message-received");
+                // You can also include some extra data.
+                intent.putExtra("message", "isConnected");
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+            }
             sendMsgTest(text);
 
         }
@@ -151,6 +167,7 @@ public class WebSocketService extends Service {
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+            sendConnectionUpdate("false");
             Log.d("W TAG ", "onFailure() is called.");
             Log.d(TAG, "waiting some time..");
             try {
@@ -158,8 +175,11 @@ public class WebSocketService extends Service {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            sendConnectionUpdate("reconnecting");
             onStartCommand(intent,flags,startid);
         }
     }
+
+
 
 }

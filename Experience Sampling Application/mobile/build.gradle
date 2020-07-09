@@ -39,6 +39,9 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.7.2'
     implementation 'tech.gusavila92:java-android-websocket-client:1.2.2'
 
+    implementation 'com.mikepenz:actionitembadge:4.0.0'
+    //implementation "com.mikepenz:iconics-core:3.2.5"
+    implementation 'com.mikepenz:fontawesome-typeface:5.9.0.0-kotlin@aar'
 
     // Default
     implementation 'androidx.appcompat:appcompat:1.0.2'
