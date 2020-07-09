@@ -1,0 +1,3 @@
+[console_scripts]
+py_openthesaurus = py_openthesaurus.main:main
+
