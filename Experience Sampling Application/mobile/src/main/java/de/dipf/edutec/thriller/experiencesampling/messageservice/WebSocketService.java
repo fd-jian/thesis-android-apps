@@ -89,6 +89,17 @@ public class WebSocketService extends Service {
         return START_NOT_STICKY;
     }
 
+    public void restart(){
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        System.out.println(sp.getAll());
+        String lobby = sp.getString("signature","defaultChannel");
+
+        Request request = new Request.Builder().url("ws://192.168.99.100:8000/ws/chat/"+lobby+"/").build();
+        EchoWebSocketListener listener = new EchoWebSocketListener();
+        ws = client.newWebSocket(request, listener);
+        //client.dispatcher().executorService().shutdown();
+    }
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel serviceChannel = new NotificationChannel(
@@ -216,7 +227,7 @@ public class WebSocketService extends Service {
                 e.printStackTrace();
             }
             sendConnectionUpdate("reconnecting");
-            onStartCommand(intent,flags,startid);
+            restart();
         }
     }
 
