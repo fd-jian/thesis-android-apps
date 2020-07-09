@@ -34,4 +34,10 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
     compileOnly 'com.google.android.wearable:wearable:2.4.0'
+
+    // Lombok
+    implementation supportDependencies.lombok
+    annotationProcessor supportDependencies.lombok
+    testAnnotationProcessor supportDependencies.lombok
+
 }

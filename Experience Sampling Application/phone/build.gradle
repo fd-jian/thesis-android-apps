@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.mywatch"
+        applicationId "de.dipf.edutec.thriller.experiencesampling"
         minSdkVersion 28
         targetSdkVersion 29
         versionCode 1
@@ -27,7 +27,14 @@ android {
         }
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
 }
+
+
+def lombokVersion = '1.18.10'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -47,4 +54,9 @@ dependencies {
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'
     implementation 'androidx.wear:wear:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+
+    // Lombok
+    implementation supportDependencies.lombok
+    annotationProcessor supportDependencies.lombok
+    testAnnotationProcessor supportDependencies.lombok
 }

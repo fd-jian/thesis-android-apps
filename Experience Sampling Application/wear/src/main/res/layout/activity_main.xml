@@ -15,20 +15,21 @@
         android:padding="@dimen/inner_frame_layout_padding"
         app:boxedEdges="all">
 
-        <TextView
-            android:id="@+id/text"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello World" />
-
         <Button
-            android:id="@+id/bt_main_startSession"
-            android:layout_gravity="center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/start_session"
-            android:textAllCaps="false" />
+                android:id="@+id/bt_main_startSession"
+                android:layout_gravity="top"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/start_session"
+                android:textAllCaps="false"/>
+        <Button
+                android:id="@+id/bt_main_stopSession"
+                android:layout_gravity="bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/stop_session"
+                android:enabled="false"
+                android:textAllCaps="false"/>
 
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

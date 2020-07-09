@@ -38,11 +38,9 @@ import com.google.android.material.badge.BadgeUtils;
 import com.mikepenz.actionitembadge.library.ActionItemBadge;
 import com.mikepenz.iconics.typeface.library.fontawesome.FontAwesome;
 
-import org.json.JSONArray;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.DataLayerListenerService;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.List;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
@@ -57,7 +55,6 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 import pl.droidsonroids.gif.GifImageButton;
-import pl.droidsonroids.gif.GifImageView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -125,11 +122,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("message-received"));
 
+        // start service to listen to sensor data
+        // automatic start via manifest file did not work with stable mqtt connection. Needs to be started as a
+        // foreground service.
+        Intent intent = new Intent(this, DataLayerListenerService.class);
+        startService(intent);
     }
-
-
-
-
 
     // instantiate GUI Elements
     public void findGUIElements(){
@@ -162,9 +160,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bt_wearos.setVisibility(View.VISIBLE);
             }
         });
-
-
-
 
     }
 
