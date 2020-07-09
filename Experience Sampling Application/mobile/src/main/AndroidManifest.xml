@@ -1,87 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="de.dipf.edutec.thriller.experiencesampling">
+          package="de.dipf.edutec.thriller.experiencesampling">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:name=".conf.CustomApplication"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true">
+            android:allowBackup="true"
+            android:icon="@mipmap/ic_launcher"
+            android:name=".conf.CustomApplication"
+            android:label="@string/app_name"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:supportsRtl="true"
+            android:theme="@style/AppTheme"
+            android:usesCleartextTraffic="true">
+
+        <receiver
+                android:enabled="true"
+                android:name=".conf.OnBootReceiver"
+                android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
 
         <service
                 android:name=".sensorservice.DataLayerListenerService"
                 android:enabled="true"
                 android:exported="true">
             <intent-filter>
-                <!--                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />-->
-                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
-                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-                <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
-                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT" />
-                <data android:scheme="wear" android:host="*" android:path="/accelerometer_data" />
+                <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED"/>
+                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT"/>
+                <data android:scheme="wear" android:host="*" android:path="/accelerometer_data"/>
             </intent-filter>
         </service>
 
         <service
-            android:name=".messageservice.MessageService"
-            android:enabled="true"
-            android:exported="true">
+                android:name=".messageservice.MessageService"
+                android:enabled="true"
+                android:exported="true">
             <intent-filter>
-                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED"/>
 
                 <data
-                    android:host="*"
-                    android:pathPrefix="/toHandheld"
-                    android:scheme="wear" />
+                        android:host="*"
+                        android:pathPrefix="/toHandheld"
+                        android:scheme="wear"/>
             </intent-filter>
         </service>
-        <service android:name=".messageservice.WebSocketService" />
+        <service android:name=".messageservice.WebSocketService"/>
 
         <activity
-            android:name=".activities.TestingActivity"
-            android:label="@string/title_acitivity_testing"
-            android:parentActivityName=".activities.MainActivity">
+                android:name=".activities.TestingActivity"
+                android:label="@string/title_acitivity_testing"
+                android:parentActivityName=".activities.MainActivity">
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MainActivity" />
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value=".activities.MainActivity"/>
         </activity>
 
 
         <activity
-            android:name=".activities.ReplyCollectionActivity"
-            android:label="@string/title_acitivty_replyCollection"
-            android:parentActivityName=".activities.MainActivity">
+                android:name=".activities.ReplyCollectionActivity"
+                android:label="@string/title_acitivty_replyCollection"
+                android:parentActivityName=".activities.MainActivity">
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MainActivity" />
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value=".activities.MainActivity"/>
         </activity>
 
         <activity android:name=".activities.MainActivity">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
         <activity
-            android:name=".activities.SettingsActivity"
-            android:label="@string/title_activity_settings"
-            android:parentActivityName=".activities.MainActivity">
+                android:name=".activities.SettingsActivity"
+                android:label="@string/title_activity_settings"
+                android:parentActivityName=".activities.MainActivity">
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.MainActivity" />
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value=".activities.MainActivity"/>
         </activity>
     </application>
 

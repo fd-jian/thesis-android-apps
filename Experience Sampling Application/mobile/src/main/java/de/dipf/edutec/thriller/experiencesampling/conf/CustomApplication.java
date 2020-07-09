@@ -12,6 +12,9 @@ public class CustomApplication extends Application {
    @Override
    public void onCreate() {
       super.onCreate();
-      this.context = new ApplicationContext(getApplicationContext(), getSystemService(NotificationManager.class), R.raw.ca);
+      this.context = new ApplicationContext(
+              getApplicationContext(),
+              getSystemService(NotificationManager.class),
+              R.raw.ca);
    }
 }

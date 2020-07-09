@@ -25,12 +25,21 @@ public class DataLayerListenerService extends WearableListenerService {
 
     private static final String WEAR_WAKELOCKTAG = "wear:wakelocktag";
     private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
+    private static boolean isRunning = false;
 
     private MqttService mqttService;
     private ForegroundNotificationCreator fgNotificationManager;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if (isRunning) {
+            Log.d(TAG, "service is already running.");
+            return START_NOT_STICKY;
+        }
+
+        isRunning = true;
+
         Log.d(TAG, "on start command");
 
         Optional.ofNullable((PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE))
@@ -38,7 +47,7 @@ public class DataLayerListenerService extends WearableListenerService {
                 .ifPresent(PowerManager.WakeLock::acquire);
 
         startForeground(
-                fgNotificationManager.getGetId(),
+                fgNotificationManager.getId(),
                 fgNotificationManager.getNotification());
 
         mqttService.connect();
@@ -51,6 +60,7 @@ public class DataLayerListenerService extends WearableListenerService {
         super.onDestroy();
         this.mqttService.disconnect();
         stopForeground(true);
+        isRunning = false;
     }
 
     @Override

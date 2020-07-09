@@ -65,7 +65,7 @@ public class WebSocketService extends Service {
         //client.dispatcher().executorService().shutdown();
 
         startForeground(
-                fgNotificationManager.getGetId(),
+                fgNotificationManager.getId(),
                 fgNotificationManager.getNotification());
 
         return START_NOT_STICKY;

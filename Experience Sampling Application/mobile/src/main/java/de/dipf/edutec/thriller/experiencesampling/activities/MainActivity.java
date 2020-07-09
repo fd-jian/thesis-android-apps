@@ -122,9 +122,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("message-received"));
 
-        // start service to listen to sensor data
-        // automatic start via manifest file did not work with stable mqtt connection. Needs to be started as a
-        // foreground service.
+        // start service to connect to mqtt and listen to data from wearable
+        // this service is usually autostarted on boot. The following serves as a way to restart the service,
+        // for instance if it was shutdown unintentionally.
         Intent intent = new Intent(this, DataLayerListenerService.class);
         startForegroundService(intent);
     }

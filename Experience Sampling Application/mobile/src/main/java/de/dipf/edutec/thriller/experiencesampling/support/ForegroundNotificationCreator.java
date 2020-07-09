@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ForegroundNotificationCreator {
     @Getter
-    private final int getId;
+    private final int id;
     private final String channelId;
     private final Context context;
     private final Class<?> intentClass;
