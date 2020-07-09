@@ -12,6 +12,7 @@ public class MessagesSingleton {
     public List<MyMessage> messagesSend;
     public List<MyMessage> messagesReceived;
     public List<OnSuccessSendPair> msgSendList;
+    public int numOpenMessages = 0;
 
     public MessagesSingleton(){
         messagesSend = new ArrayList<MyMessage>();
@@ -28,11 +29,13 @@ public class MessagesSingleton {
 
     public void addMessageSend(MyMessage message){
         messagesSend.add(message);
+        numOpenMessages += 1;
     }
     public void addMessageReceived(MyMessage message) {
         messagesReceived.add(message);
         if(mListener != null) mListener.onStateChange(message.getUuid());
         System.out.println("MESSAGERECEIVED IS ADDED");
+        numOpenMessages -= 1;
     }
     public void addOnSuccessSendPair(OnSuccessSendPair onSuccessSendPair){
         msgSendList.add(onSuccessSendPair);
@@ -56,6 +59,7 @@ public class MessagesSingleton {
         return "";
     }
 
+    public int getNumOpenMessages(){return numOpenMessages;}
 
     // Variabel change Listener
     private MessagesSingleton.Listener mListener = null;

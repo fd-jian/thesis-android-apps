@@ -1,16 +1,42 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.ListPreference;
 import androidx.preference.PreferenceManager;
 
+import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.ActivityOptions;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
+
+import com.google.android.material.badge.BadgeDrawable;
+import com.google.android.material.badge.BadgeUtils;
+import com.mikepenz.actionitembadge.library.ActionItemBadge;
+import com.mikepenz.iconics.typeface.library.fontawesome.FontAwesome;
 
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.DataLayerListenerService;
 import org.json.JSONException;
@@ -20,6 +46,7 @@ import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessage;
+import de.dipf.edutec.thriller.experiencesampling.messageservice.WebSocketService;
 import de.dipf.edutec.thriller.messagestruct.MyMessage;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,6 +64,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     GifImageButton dummy2;
     Button bt_settings, bt_database, bt_smartwatch, bt_testing, bt_info, bt_wearos;
 
+    Menu menu;
+    int msgToHandle = 0;
+
+    private BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
+        @SuppressLint("RestrictedApi")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String connected = intent.getStringExtra("message");
+            Log.d("receiver", "Got message: " + connected);
+            if(connected.equals("true")){
+                //bt_database.setCompoundDrawableTintList(ColorStateList.valueOf(getResources().getColor(R.color.green_ok, null)));
+                getSupportActionBar().setTitle(Html.fromHtml("Exp. Sampling: <font color='#4CAF50'> Online </font>", 1));
+            } else if(connected.equals("false")) {
+                //bt_database.setCompoundDrawableTintList(ColorStateList.valueOf(getResources().getColor(R.color.red_ok, null)));
+                getSupportActionBar().setTitle(Html.fromHtml("Exp. Sampling: <font color='#F44336'> Offline </font>", 1));
+            } else {
+                getSupportActionBar().setTitle(Html.fromHtml("Exp. Sampling: <font color='#FF9800'> Connecting </font>", 1));
+            }
+
+        }
+    };
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @SuppressLint("RestrictedApi")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String connected = intent.getStringExtra("message");
+            Log.d("receiver", "Got message: " + connected);
+            msgToHandle +=1;
+            ActionItemBadge.update(menu.findItem(R.id.item_samplebadge),MessagesSingleton.getInstance().numOpenMessages);
+
+        }
+    };
+
 
 
 
@@ -47,7 +108,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         findGUIElements();
 
+        getSupportActionBar().setTitle(Html.fromHtml("Exp. Sampling: - ", 1));
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        //getSupportActionBar().setLogo(R.drawable.ic_notifications_black_24dp);
+        //getSupportActionBar().setDisplayUseLogoEnabled(true);
+
         Receiver receiver = new Receiver(this);
+        startService(new Intent(this, WebSocketService.class));
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mConnectionReceiver,
+                new IntentFilter("connection-state-changed"));
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("message-received"));
 
         // start service to listen to sensor data
         // automatic start via manifest file did not work with stable mqtt connection. Needs to be started as a
@@ -126,21 +199,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-        /*
-        try{
-            MyMessage myMessage = MyMessage.decodeMessage(text);
-            //System.out.print(myMessage.toString());
-            SendMessage messageService = new SendMessage(this);
-            messageService.sendMessage(PATH_SMARTWATCH_TEST,myMessage);
-        } catch (Exception e){
-            System.out.println(e);
-            System.out.println(R.string.TAG_WEBSOCKET_RECEIVED + text);
+        @SuppressLint("ResourceType")
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            this.menu = menu;
+            getMenuInflater().inflate(R.layout.menu_settings, menu);
 
+            //you can add some logic (hide it if the count == 0)
+            Drawable drawable = getDrawable(R.drawable.ic_message_black_24dp);
+            ActionItemBadge.update(this, menu.findItem(R.id.item_samplebadge),drawable, ActionItemBadge.BadgeStyles.GREEN, MessagesSingleton.getInstance().numOpenMessages);
+
+            return true;
         }
-        */
-
-
-
 
 }
 

@@ -84,6 +84,8 @@
             android:orientation="horizontal"
             android:gravity="center">
 
+
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/bt_main_smartwatch"
                 android:layout_width="115sp"
@@ -97,20 +99,22 @@
                 android:elevation="5dp"
                 android:layout_margin="20sp"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/bt_main_database"
-                android:layout_width="115sp"
-                android:layout_height="130sp"
-                android:backgroundTint="@color/white"
-                android:drawableTop="@drawable/icon_database"
-                android:text="@string/QandA"
-                android:textAllCaps="false"
-                android:textColor="@color/black"
-                android:textSize="18sp"
-                android:elevation="5dp"
-                android:layout_margin="20sp"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/bt_main_database"
+                    android:layout_width="115sp"
+                    android:layout_height="130sp"
+                    android:backgroundTint="@color/white"
+                    android:drawableTop="@drawable/icon_database"
+                    android:text="@string/QandA"
+                    android:textAllCaps="false"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:elevation="5dp"
+                    android:layout_margin="20sp"/>
 
         </LinearLayout>
+
+
 
         <LinearLayout
             android:layout_width="match_parent"
