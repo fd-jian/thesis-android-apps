@@ -1,4 +1,4 @@
-package com.example.myapplication;
+package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -12,6 +12,8 @@ import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,47 +26,11 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public class DataLayerListenerService extends WearableListenerService {
-    public static final String ACCELEROMETER = "ACCELEROMETER";
-    public static final String MESSAGE_COUNT = "MESSAGE_COUNT";
-    public static final String SECONDS_ELAPSED = "SECONDS_ELAPSED";
-    public static final String MESSAGES_PER_SECOND = "MESSAGES_PER_SECOND";
 
     private static final String WEAR_WAKELOCKTAG = "wear:wakelocktag";
     private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
-    private float[] cachedAccData = {0, 0, 0};
-    private int messageCounter = 0;
-    private long timestampSeconds = Instant.now().getEpochSecond();
-    private long lastMessageReceived;
 
     private MqttService mqttService;
-    private Handler handler = new Handler();
-
-    private static final int BROADCAST_INTERVAL = 500;
-    private Runnable sendBroadcastMessage = new Runnable() {
-        public void run() {
-
-            long newTimestamp = Instant.now().getEpochSecond();
-            long secondsElapsed = newTimestamp - timestampSeconds;
-            float messagesPerSecond = secondsElapsed != 0 ? (float) messageCounter / (float) secondsElapsed : 0F;
-
-            if (newTimestamp - lastMessageReceived > 5) {
-                secondsElapsed = 0;
-                messageCounter = 0;
-                timestampSeconds = newTimestamp;
-            }
-
-            Log.v(TAG, "sending broadcast message for ui");
-            Intent local = new Intent();
-            local.setAction("com.hello.action");
-            local.putExtra(ACCELEROMETER, Arrays.toString(cachedAccData));
-            local.putExtra(MESSAGE_COUNT, Integer.toString(messageCounter));
-            local.putExtra(SECONDS_ELAPSED, Long.toString(secondsElapsed));
-            local.putExtra(MESSAGES_PER_SECOND, Float.toString(messagesPerSecond));
-            sendBroadcast(local);
-
-            handler.postDelayed(this, BROADCAST_INTERVAL);
-        }
-    };
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -89,16 +55,12 @@ public class DataLayerListenerService extends WearableListenerService {
 
         mqttService.connect();
 
-        //  Update UI with accelerometer data and send it to handheld device every 2 seconds
-        handler.postDelayed(sendBroadcastMessage, BROADCAST_INTERVAL);
-
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        handler.removeCallbacks(sendBroadcastMessage);
         this.mqttService.disconnect();
         stopForeground(true);
     }
@@ -113,10 +75,7 @@ public class DataLayerListenerService extends WearableListenerService {
     private void handleRecord(byte[] data) {
         float[] floats = getFloats(data);
 
-        cachedAccData = floats;
-        ++messageCounter;
         Instant now = Instant.now();
-        lastMessageReceived = now.getEpochSecond();
 
         if (!mqttService.isConnected()) {
             Log.d(TAG, "mqtt broker is not connected");

@@ -40,4 +40,9 @@ dependencies {
     compileOnly 'com.google.android.wearable:wearable:2.4.0'
     implementation project(path: ':messagestruct')
 
+    // Lombok
+    implementation supportDependencies.lombok
+    annotationProcessor supportDependencies.lombok
+    testAnnotationProcessor supportDependencies.lombok
+
 }

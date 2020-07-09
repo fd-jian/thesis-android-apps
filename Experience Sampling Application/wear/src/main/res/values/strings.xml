@@ -13,5 +13,6 @@
 
     // User Interface Strings
     <string name="start_session">Start Session</string>
+    <string name="stop_session">Stop Session</string>
 
 </resources>

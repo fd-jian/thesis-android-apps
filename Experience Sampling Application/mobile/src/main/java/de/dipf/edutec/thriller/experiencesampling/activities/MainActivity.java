@@ -1,6 +1,5 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.ListPreference;
 import androidx.preference.PreferenceManager;
 
 import android.app.ActivityOptions;
@@ -11,14 +10,11 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import org.json.JSONArray;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.DataLayerListenerService;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.List;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
@@ -32,7 +28,6 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 import pl.droidsonroids.gif.GifImageButton;
-import pl.droidsonroids.gif.GifImageView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -54,13 +49,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Receiver receiver = new Receiver(this);
 
-
-
+        // start service to listen to sensor data
+        // automatic start via manifest file did not work with stable mqtt connection. Needs to be started as a
+        // foreground service.
+        Intent intent = new Intent(this, DataLayerListenerService.class);
+        startService(intent);
     }
-
-
-
-
 
     // instantiate GUI Elements
     public void findGUIElements(){

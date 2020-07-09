@@ -1,53 +1,102 @@
+
 package de.dipf.edutec.thriller.experiencesampling.activities;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
-import android.view.View;
+import android.util.Log;
 import android.widget.Button;
-import android.widget.TextView;
-
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import java.security.acl.NotOwnerException;
-
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.Helper;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.SensorDataService;
+
+import java.util.Optional;
 
 public class MainActivity extends WearableActivity {
 
-    private Button bt_main_startSession;
+    private static final String TAG = "wear:" + MainActivity.class.getSimpleName();
+    private Button startButton;
+    private Button stopButton;
 
     @Override
     public void onRestart() {
         super.onRestart();
-        System.out.println("On Restart is called");
+        Log.d(TAG, "onResume called");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        System.out.println("onResume is called");
+        setRunning(Helper.accelerometerListener != null);
+        Log.d(TAG, "onResume called");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate called");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Enables Always-on
         setAmbientEnabled();
 
+        startButton = Optional.ofNullable((Button) findViewById(R.id.bt_main_startSession))
+                .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", R.id.bt_main_startSession)));
+
+        stopButton = Optional.ofNullable((Button) findViewById(R.id.bt_main_stopSession))
+                .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", R.id.bt_main_stopSession)));
+
+        setRunning(Helper.accelerometerListener != null);
+
+        Intent intent = new Intent(getApplicationContext(), SensorDataService.class);
+        intent.setClassName(getPackageName(), SensorDataService.class.getName());
         // Handling our GUI Elements
-        findGUIElements();
+
+        startButton.setOnClickListener(v -> {
+            setRunning(true);
+            Log.i(TAG, "start sensor streaming");
+            startService(intent);
+        });
+
+        stopButton.setOnClickListener(v -> {
+            // Start Smartphone Activity + Start Websocket Backend.
+            setRunning(false);
+            Log.i(TAG, "stop sensor streaming");
+            stopService(intent);
+        });
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        setRunning(false);
+                    }
+                }, new IntentFilter("sensor-service-destroyed"));
 
         // Ability to Receive Messages from the MessageService ( WearableListener )
         IntentFilter newFilter = new IntentFilter(Intent.ACTION_SEND);
@@ -57,8 +106,8 @@ public class MainActivity extends WearableActivity {
         System.out.println("Receiver registered");
 
         // If we restarted our Application via handheld we have to send an acknowledment
-        Boolean isIntent = getIntent().getBooleanExtra("bool",false);
-        if(isIntent){
+        Boolean isIntent = getIntent().getBooleanExtra("bool", false);
+        if (isIntent) {
             SendMessageWear sendMessageWear = new SendMessageWear(this);
             sendMessageWear.sendAck("/toHandheld/Test", getIntent().getStringExtra("message"));
         }
@@ -67,7 +116,13 @@ public class MainActivity extends WearableActivity {
 
     }
 
-    public void createNotificationChannel(){
+    private void setRunning(boolean running) {
+        Log.d(TAG, "setting running to " + running);
+        stopButton.setEnabled(running);
+        startButton.setEnabled(!running);
+    }
+
+    public void createNotificationChannel() {
         NotificationManager notificationManager = (NotificationManager)
                 getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -75,29 +130,18 @@ public class MainActivity extends WearableActivity {
         String channelName = getResources().getString(R.string.notiChannelName);
         int importance = NotificationManager.IMPORTANCE_HIGH;
 
-        @SuppressLint("WrongConstant") NotificationChannel notificationChannel = new NotificationChannel(channelID,channelName,importance);
+        @SuppressLint("WrongConstant") NotificationChannel notificationChannel = new NotificationChannel(channelID, channelName, importance);
         notificationChannel.enableLights(true);
         notificationChannel.setLightColor(Color.RED);
 
         notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
         notificationChannel.setShowBadge(true);
         notificationChannel.setVibrationPattern(new long[]{0, 1000, 500, 50,
-                                                            0, 1000, 500, 50,
-                                                            0, 1000, 500, 50});
+                0, 1000, 500, 50,
+                0, 1000, 500, 50});
         notificationChannel.enableVibration(true);
         notificationManager.createNotificationChannel(notificationChannel);
 
     }
 
-    public void findGUIElements(){
-        bt_main_startSession = findViewById(R.id.bt_main_startSession);
-        bt_main_startSession.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO
-                // Start Smartphone Activity + Start Websocket Backend.
-            }
-        });
-
-    }
 }

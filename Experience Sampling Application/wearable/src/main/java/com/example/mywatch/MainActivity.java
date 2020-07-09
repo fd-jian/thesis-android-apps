@@ -18,15 +18,12 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.*;
-import java.text.SimpleDateFormat;
 import java.time.*;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAccessor;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,7 +34,6 @@ public class MainActivity extends WearableActivity {
     private static final String ACCELEROMETER_MESSAGE_PATH = "/accelerometer_data";
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private TextView mTextView;
     private float[] acc = {0.0F, 0.0F, 0.0F};
 
     private String accelerometerNodeId = null;
@@ -45,11 +41,10 @@ public class MainActivity extends WearableActivity {
     private Handler handler;
     private Runnable updateUi;
 
-    private PowerManager.WakeLock mWakeLock;
     private int messageCounter = 0;
     private long lastMessageReceived = 0;
     private long secondsElapsed = 0;
-    private long timestampSeconds = Instant.now().getEpochSecond();
+    private long prevTimestamp = Instant.now().getEpochSecond();
     private float messagesPerSecond = 0F;
 
     private FileOutputStream fileOutputStream;
@@ -59,10 +54,7 @@ public class MainActivity extends WearableActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 //        setContentView(R.layout.activity_main);
-
 //        mTextView = (TextView) findViewById(R.id.text);
-//
-
         LinearLayout linearLayout = new LinearLayout(this);
         setContentView(linearLayout);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -83,57 +75,26 @@ public class MainActivity extends WearableActivity {
         // Enables Always-on
         setAmbientEnabled();
 
-        this.setupAccelerometerTransmission();
-
         // TODO: on app start, screen is inactive and this still does not work without tapping the screen.
         //  unclear if wakelock even makes a difference....
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
-        mWakeLock.acquire();
+        Optional.ofNullable((PowerManager) getSystemService(Context.POWER_SERVICE))
+                .map(pm -> pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag"))
+                .ifPresent(PowerManager.WakeLock::acquire);
 
-        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        this.setupWearableDataTransmission().addOnSuccessListener(command -> {
+            // TODO: maybe rest here?
+        });
+
+        setupFileLogging();
+
+        SensorManager sensorManager = Optional
+                .ofNullable((SensorManager) getSystemService(SENSOR_SERVICE))
+                .orElseThrow(() -> new RuntimeException(String.format(
+                        "Service '%s' not found.", SENSOR_SERVICE)));
+
         Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
 
-        Date date = new Date();
-        ZonedDateTime now = ZonedDateTime.ofInstant(
-                Instant.ofEpochMilli(date.getTime()), ZoneId.systemDefault());
-
-        File externalFilesDir = getApplicationContext()
-                .getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-
-        // Cleanup old files
-        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(
-                String.format(
-                        "regex:.*%s(?!%s).*",
-                        new SimpleDateFormat("yyyy-MM-", Locale.getDefault()).format(date),
-                        now.getDayOfMonth()));
-
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(
-                Paths.get(externalFilesDir.getPath()), pathMatcher::matches)) {
-            dirStream.forEach(path -> {
-                Log.w(TAG, String.format("Deleting %s", path.toString()));
-                path.toFile().delete();
-            });
-        } catch (IOException e) {
-            throw new RuntimeException();
-        }
-
-        String fileName = String.format("accelero_dump%s",
-                new SimpleDateFormat("yyyy-MM-dd'T'hh-mm-ss", Locale.getDefault()).format(date));
-        File file = new File(externalFilesDir, fileName);
-
-        try {
-            file.createNewFile();
-            fileOutputStream = new FileOutputStream(file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        String absolutePath = file.getAbsolutePath();
-
-        Log.w(TAG, String.format("Created FileOutputStream for file at path: %s", absolutePath));
-
-        sensorManager.registerListener(new SensorEventListener() {
+        SensorEventListener listener = new SensorEventListener() {
 
             @Override
             public void onSensorChanged(SensorEvent event) {
@@ -148,7 +109,7 @@ public class MainActivity extends WearableActivity {
                 }
 
                 ++messageCounter;
-                lastMessageReceived = Instant.now().getEpochSecond();
+                lastMessageReceived = Instant.now().toEpochMilli();
             }
 
             @Override
@@ -156,83 +117,133 @@ public class MainActivity extends WearableActivity {
                 Log.w(TAG, String.format("Accuracy changed to %d", accuracy));
             }
 
-        }, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        };
+        sensorManager.registerListener(listener, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+
+        // todo: on stop do:
+//        sensorManager.unregisterListener(listener);
 
         //  Update UI with accelerometer data and send it to handheld device every 2 seconds
         handler = new Handler();
         int delay = 500;
         updateUi = new Runnable() {
             public void run() {
-                long newTimestamp = Instant.now().getEpochSecond();
-                secondsElapsed = newTimestamp - timestampSeconds;
+                long newTimestamp = Instant.now().toEpochMilli();
+                secondsElapsed = newTimestamp - prevTimestamp;
                 messagesPerSecond = secondsElapsed != 0 ? (float) messageCounter / (float) secondsElapsed : 0F;
 
-                if (newTimestamp - lastMessageReceived > 5) {
+                if (newTimestamp - lastMessageReceived > 5000) {
                     secondsElapsed = 0;
                     messageCounter = 0;
-                    timestampSeconds = newTimestamp;
+                    prevTimestamp = newTimestamp;
                 }
 
+                setAmbientEnabled();
                 accelerometerDataView.setText(IntStream.range(0, acc.length)
                         .mapToObj(value -> acc[value])
                         .map(aFloat -> (float) Math.round(aFloat * 1000) / 1000)
                         .map(Object::toString)
                         .collect(Collectors.joining("; ")));
-                handler.postDelayed(this, delay);
 
-                String messageCount = String.format("%d messages received",
+                @SuppressLint("DefaultLocale") String messageCount = String.format("%d messages received",
                         messageCounter);
 //                Log.w(TAG, messageCount);
                 messageCountView.setText(messageCount);
 
                 long secEl = secondsElapsed;
-                String secondsElapsed = String.format("%d seconds elapsed",
+                @SuppressLint("DefaultLocale") String secondsElapsed = String.format("%d seconds elapsed",
                         secEl);
 //                Log.w(TAG, secondsElapsed);
                 secondsElapsedView.setText(secondsElapsed);
 
                 float messPerSec = messagesPerSecond;
-                String messagesPerSecond = String.format("%.2f messages/second",
+                @SuppressLint("DefaultLocale") String messagesPerSecond = String.format("%.2f messages/second",
                         messPerSec);
 //                Log.w(TAG, messagesPerSecond);
                 messagesPerSecondView.setText(messagesPerSecond);
+
+                handler.postDelayed(this, delay);
             }
         };
         handler.postDelayed(updateUi, delay);
 
     }
 
-    private void sendMessage(float[] acc) {
-        Wearable.getMessageClient(this).sendMessage(accelerometerNodeId, ACCELEROMETER_MESSAGE_PATH, getAccBytes(acc));
+    private void setupFileLogging() {
+        Instant date = Instant.now();
+        ZonedDateTime now = ZonedDateTime.ofInstant(
+                date, ZoneId.systemDefault());
+
+        File externalFilesDir = Optional.ofNullable(getApplicationContext()
+                .getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS))
+                .orElseThrow(() -> new RuntimeException("Local Download directory not found/inaccessible."));
+
+        // Cleanup old files
+        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(
+                String.format(
+                        "regex:.*%s(?!%s).*",
+                        DateTimeFormatter.ofPattern("yyyy-MM-").format(date),
+                        now.getDayOfMonth()));
+
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(
+                Paths.get(externalFilesDir.getPath()), pathMatcher::matches)) {
+            dirStream.forEach(path -> {
+                Log.w(TAG, String.format("Deleting %s", path.toString()));
+                if(!path.toFile().delete()){
+                    Log.w(TAG, "Failed to delete old log file.");
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
+
+        String fileName = String.format("accelero_dump%s",
+                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh-mm-ss").format(date));
+        File file = new File(externalFilesDir, fileName);
+
+        try {
+            if(!file.createNewFile()) {
+                Log.w(TAG, String.format(
+                        "Log file '%s' already exists. Appending new log output to it.",
+                        file.getAbsolutePath()));
+            };
+            fileOutputStream = new FileOutputStream(file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        String absolutePath = file.getAbsolutePath();
+
+        Log.w(TAG, String.format("Created FileOutputStream for file at path: %s", absolutePath));
     }
 
-    private byte[] getAccBytes(float[] accelerometerValues) {
+    private void sendMessage(float[] acc) {
+        Wearable.getMessageClient(this)
+                .sendMessage(accelerometerNodeId,
+                        ACCELEROMETER_MESSAGE_PATH, getSensorBytes(acc));
+    }
+
+    private byte[] getSensorBytes(float[] accelerometerValues) {
         byte[] res = new byte[12];
         for (int i = 0; i < accelerometerValues.length; i++) {
             byte[] buff = ByteBuffer.allocate(4).putFloat(accelerometerValues[i]).array();
-            for (int j = 0; j < buff.length; j++) {
-                res[i * 4 + j] = buff[j];
-            }
+            System.arraycopy(buff, 0, res, i * 4, buff.length);
         }
         return res;
     }
 
-    private Task<CapabilityInfo> setupAccelerometerTransmission() {
+    private Task<CapabilityInfo> setupWearableDataTransmission() {
         CapabilityClient capabilityClient = Wearable.getCapabilityClient(this);
-
-        capabilityClient.addListener(this::updateAccelerometerCapability, ACCELEROMETER_RECEIVER_CAPABILITY);
-
+        // listener to update node config on changes to ACCELEROMETER_RECEIVER_CAPABILITY
+        capabilityClient.addListener(this::updateNodeConfig, ACCELEROMETER_RECEIVER_CAPABILITY);
+        // get current ACCELEROMETER_RECEIVER_CAPABILITY and update node config
         return capabilityClient.getCapability(ACCELEROMETER_RECEIVER_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
-                .addOnSuccessListener(this::updateAccelerometerCapability);
+                .addOnSuccessListener(this::updateNodeConfig);
     }
 
-    private void updateAccelerometerCapability(CapabilityInfo capabilityInfo) {
+    private void updateNodeConfig(CapabilityInfo capabilityInfo) {
         Set<Node> connectedNodes = capabilityInfo.getNodes();
         Log.w(TAG, "Updating capability: " + capabilityInfo.getName() + ", nodes found: " + connectedNodes.size());
-        updateNodeId(connectedNodes);
-    }
-
-    private void updateNodeId(Set<Node> connectedNodes) {
         accelerometerNodeId = pickBestNodeId(connectedNodes);
         Log.w(TAG, "accelerometerNodeId is now " + accelerometerNodeId);
     }
