@@ -24,6 +24,7 @@ import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessage;
+import de.dipf.edutec.thriller.experiencesampling.messageservice.WebSocketService;
 import de.dipf.edutec.thriller.messagestruct.MyMessage;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findGUIElements();
 
         Receiver receiver = new Receiver(this);
-
+        startService(new Intent(this, WebSocketService.class));
 
 
     }

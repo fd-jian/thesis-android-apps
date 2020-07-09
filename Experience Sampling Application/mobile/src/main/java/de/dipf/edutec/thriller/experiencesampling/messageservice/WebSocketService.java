@@ -25,32 +25,42 @@ import tech.gusavila92.websocketclient.WebSocketClient;
 
 public class WebSocketService extends Service {
     // Static
+    private static String TAG = "WebSockerService: ";
     String PATH_SMARTWATCH_TEST;
+
     // WebSockets
     OkHttpClient client;
     WebSocket ws;
     MessagesSingleton messagesSingleton;
 
+    Intent intent;
+    int flags;
+    int startid;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        return null;
+    }
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startid) {
+
+        this.intent = intent;
+        this.flags = flags;
+        this.startid = startid;
         PATH_SMARTWATCH_TEST = getResources().getString(R.string.PATH_TOSMARTWATCH_TEST);
         client = new OkHttpClient();
         messagesSingleton = MessagesSingleton.getInstance();
-        start();
-        return null;
-    }
-
-    void start() {
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         System.out.println(sp.getAll());
         String lobby = sp.getString("signature","defaultChannel");
 
-        Request request = new Request.Builder().url("ws://192.168.2.107:8000/ws/chat/"+lobby+"/").build();
+        Request request = new Request.Builder().url("ws://192.168.99.100:8000/ws/chat/"+lobby+"/").build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         ws = client.newWebSocket(request, listener);
         //client.dispatcher().executorService().shutdown();
+        return START_STICKY;
     }
 
     void sendMsgTest(final String text){
@@ -107,7 +117,7 @@ public class WebSocketService extends Service {
 
         @Override
         public void onOpen(WebSocket webSocket, Response response) {
-            Log.d("MainActivity TAG ", "onOpen() is called.");
+            Log.d(TAG , "onOpen() is called.");
             JSONObject obj = new JSONObject();
             try {
                 obj.put("message" , "Smartphone opened Connection");
@@ -141,10 +151,14 @@ public class WebSocketService extends Service {
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-            Log.d("MainActivity TAG ", "onFailure() is called.");
-            System.out.println(t);
-            System.out.println(response);
-
+            Log.d("W TAG ", "onFailure() is called.");
+            Log.d(TAG, "waiting some time..");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            onStartCommand(intent,flags,startid);
         }
     }
 
