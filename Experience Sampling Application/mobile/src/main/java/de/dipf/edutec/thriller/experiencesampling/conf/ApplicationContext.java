@@ -41,7 +41,7 @@ public class ApplicationContext {
                 notificationManager,
                 NOTIFICATION_CONTENT_TITLE,
                 NOTIFICATION_CONTENT_TEXT,
-                R.drawable.ic_notifications_black_24dp);
+                de.dipf.edutec.thriller.experiencesampling.shared.R.drawable.ic_notifications_black_24dp);
 
         mqttService = new MqttService(
                 MqttClientBuilder.builder()
