@@ -4,7 +4,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
-import de.dipf.edutec.thriller.experiencesampling.support.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
 import lombok.Getter;
 
 @Getter

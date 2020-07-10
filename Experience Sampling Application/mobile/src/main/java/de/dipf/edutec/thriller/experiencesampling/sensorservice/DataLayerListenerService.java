@@ -10,7 +10,7 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
-import de.dipf.edutec.thriller.experiencesampling.support.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
 import org.json.JSONException;
 import org.json.JSONObject;
 

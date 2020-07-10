@@ -11,12 +11,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
-import de.dipf.edutec.thriller.experiencesampling.support.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;

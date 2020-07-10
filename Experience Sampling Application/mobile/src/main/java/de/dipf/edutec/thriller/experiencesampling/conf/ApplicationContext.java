@@ -8,7 +8,7 @@ import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.CustomSslSocketFactory;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttClientBuilder;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
-import de.dipf.edutec.thriller.experiencesampling.support.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
 import lombok.Getter;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;

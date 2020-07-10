@@ -9,12 +9,10 @@ import android.widget.ImageView;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
-import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessage;
 
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
-import de.dipf.edutec.thriller.messagestruct.OnSuccessSendPair;
-import pl.droidsonroids.gif.GifDrawable;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.OnSuccessSendPair;
 import pl.droidsonroids.gif.GifImageView;
 
 public class TestingActivity extends AppCompatActivity implements View.OnClickListener {

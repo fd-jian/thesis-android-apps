@@ -1,8 +1,5 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -14,7 +11,7 @@ import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.gms.wearable.*;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
-import de.dipf.edutec.thriller.experiencesampling.support.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
 
 import java.io.IOException;
 import java.io.OutputStream;

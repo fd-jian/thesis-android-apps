@@ -1,4 +1,4 @@
-package de.dipf.edutec.thriller.experiencesampling.support;
+package de.dipf.edutec.thriller.experiencesampling.foreground;
 
 import android.app.Notification;
 import android.app.NotificationChannel;

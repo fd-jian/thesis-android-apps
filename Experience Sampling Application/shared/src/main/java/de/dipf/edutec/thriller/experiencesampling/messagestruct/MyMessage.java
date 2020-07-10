@@ -1,4 +1,4 @@
-package de.dipf.edutec.thriller.messagestruct;
+package de.dipf.edutec.thriller.experiencesampling.messagestruct;
 
 import java.lang.reflect.Field;
 import java.util.UUID;
