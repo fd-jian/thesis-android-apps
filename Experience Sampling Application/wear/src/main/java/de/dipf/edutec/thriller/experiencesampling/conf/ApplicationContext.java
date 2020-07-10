@@ -26,6 +26,7 @@ public class ApplicationContext {
                 notificationManager,
                 NOTIFICATION_CONTENT_TITLE,
                 NOTIFICATION_CONTENT_TEXT,
-                R.drawable.ic_notifications_black_24dp);
+                // TODO: long qualifier necessary to use shared resource?
+                de.dipf.edutec.thriller.experiencesampling.shared.R.drawable.ic_notifications_black_24dp);
     }
 }
