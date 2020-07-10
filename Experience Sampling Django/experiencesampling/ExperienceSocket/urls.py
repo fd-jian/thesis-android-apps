@@ -1,6 +1,6 @@
 # chat/urls.py
 from django.urls import path
-
+from .jobs import *
 from . import views
 
 urlpatterns = [

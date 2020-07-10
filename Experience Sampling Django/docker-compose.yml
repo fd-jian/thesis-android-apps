@@ -7,24 +7,25 @@ services:
     ports:
       - '6379:6379'
   web:
-    build: ./experiencesampling
+    build: .\experiencesampling
     command: python manage.py runserver 0.0.0.0:8000
-#    volumes:
-#      - ./experiencesampling:/experiencesampling
+    volumes:
+     - .:\code
     ports:
       - "8000:8000"
   worker_channels:
-    build: ./experiencesampling
+
+    build: .\experiencesampling
     command: python manage.py runworker channels
-#   volumes:
-#     - ./experiencesampling:/experiencesampling
+    volumes:
+      - .:\code
     links:
       - redis
   channels:
-    build: ./experiencesampling
+    build: .\experiencesampling
     command: daphne -p 8001 experiencesampling.asgi:application
-#    volumes:
-#      - ./experiencesampling:/experiencesampling
+    volumes:
+      - .:\code
     ports:
       - "8001:8001"
     links:

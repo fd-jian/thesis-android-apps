@@ -12,12 +12,21 @@ Class-based views
 Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+    python manage.py runserver 0.0.0.0:8000
 """
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include
 
+from ExperienceSocket.views import SignUpView
+from ExperienceSocket.views import LogInView
+from ExperienceSocket.views import LogOutView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ExperienceSocket/', include('ExperienceSocket.urls')),
+
+    #path('signup',SignUpView.as_view(),name='sign_up'),
+    #path('login',LogInView.as_view(), name='log_in'),
+    #path('logout', LogOutView.as_view(), name='log_out'),
 ]

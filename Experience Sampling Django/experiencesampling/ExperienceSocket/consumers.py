@@ -6,7 +6,10 @@ from .models import Message
 
 class ChatConsumer(WebsocketConsumer):
 
+
+
     def connect(self):
+
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'ExperienceSocket_%s' % self.room_name
 
@@ -17,6 +20,9 @@ class ChatConsumer(WebsocketConsumer):
         )
 
         self.accept()
+
+
+
 
     def disconnect(self, close_code):
         # Leave room group
