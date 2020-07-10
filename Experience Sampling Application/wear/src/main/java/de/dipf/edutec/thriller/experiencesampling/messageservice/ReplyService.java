@@ -1,19 +1,14 @@
 package de.dipf.edutec.thriller.experiencesampling.messageservice;
 
 import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
 
-import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
 
 public class ReplyService extends IntentService {
 

@@ -1,7 +1,6 @@
 package de.dipf.edutec.thriller.experiencesampling.messageservice;
 
 
-import androidx.core.app.NotificationCompat.WearableExtender;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,17 +8,13 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
 
-import com.google.android.gms.common.util.ArrayUtils;
-
 import de.dipf.edutec.thriller.experiencesampling.R;
-import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
 
 import static android.app.PendingIntent.FLAG_CANCEL_CURRENT;
 

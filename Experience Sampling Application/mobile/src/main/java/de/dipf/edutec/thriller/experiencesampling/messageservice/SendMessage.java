@@ -14,10 +14,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.OnSuccessSendPair;
+
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
-import de.dipf.edutec.thriller.messagestruct.OnSuccessSendPair;
 
 public class SendMessage extends Application {
 

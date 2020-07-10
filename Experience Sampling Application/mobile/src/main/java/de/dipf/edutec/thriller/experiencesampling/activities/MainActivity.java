@@ -1,59 +1,31 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.ListPreference;
-import androidx.preference.PreferenceManager;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
-import com.google.android.material.badge.BadgeDrawable;
-import com.google.android.material.badge.BadgeUtils;
 import com.mikepenz.actionitembadge.library.ActionItemBadge;
-import com.mikepenz.iconics.typeface.library.fontawesome.FontAwesome;
 
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.DataLayerListenerService;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
-import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessage;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.WebSocketService;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
 import pl.droidsonroids.gif.GifImageButton;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {

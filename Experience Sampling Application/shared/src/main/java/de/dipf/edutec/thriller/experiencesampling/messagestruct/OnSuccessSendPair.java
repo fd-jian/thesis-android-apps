@@ -1,4 +1,4 @@
-package de.dipf.edutec.thriller.messagestruct;
+package de.dipf.edutec.thriller.experiencesampling.messagestruct;
 
 public class OnSuccessSendPair {
 
