@@ -18,7 +18,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.Helper;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.SensorDataService;
 
 import java.util.Optional;
@@ -43,7 +42,7 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onResume() {
         super.onResume();
-        setRunning(Helper.accelerometerListener != null);
+        setRunning(SensorDataService.isRunning);
         Log.d(TAG, "onResume called");
     }
 
@@ -71,7 +70,7 @@ public class MainActivity extends WearableActivity {
         stopButton = Optional.ofNullable((Button) findViewById(R.id.bt_main_stopSession))
                 .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", R.id.bt_main_stopSession)));
 
-        setRunning(Helper.accelerometerListener != null);
+        setRunning(SensorDataService.isRunning);
 
         Intent intent = new Intent(getApplicationContext(), SensorDataService.class);
         intent.setClassName(getPackageName(), SensorDataService.class.getName());
@@ -94,7 +93,7 @@ public class MainActivity extends WearableActivity {
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
-                        setRunning(false);
+                        setRunning(SensorDataService.isRunning);
                     }
                 }, new IntentFilter("sensor-service-destroyed"));
 
