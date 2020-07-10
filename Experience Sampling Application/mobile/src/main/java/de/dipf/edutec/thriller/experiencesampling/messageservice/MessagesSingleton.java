@@ -1,7 +1,7 @@
 package de.dipf.edutec.thriller.experiencesampling.messageservice;
 
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
-import de.dipf.edutec.thriller.messagestruct.OnSuccessSendPair;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.OnSuccessSendPair;
 
 import java.util.ArrayList;
 import java.util.List;

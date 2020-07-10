@@ -1,59 +1,31 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.ListPreference;
-import androidx.preference.PreferenceManager;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
-import com.google.android.material.badge.BadgeDrawable;
-import com.google.android.material.badge.BadgeUtils;
 import com.mikepenz.actionitembadge.library.ActionItemBadge;
-import com.mikepenz.iconics.typeface.library.fontawesome.FontAwesome;
 
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.DataLayerListenerService;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
-import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessage;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.WebSocketService;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
 import pl.droidsonroids.gif.GifImageButton;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -114,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //getSupportActionBar().setDisplayUseLogoEnabled(true);
 
         Receiver receiver = new Receiver(this);
-        startService(new Intent(this, WebSocketService.class));
+        startForegroundService(new Intent(this, WebSocketService.class));
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mConnectionReceiver,
                 new IntentFilter("connection-state-changed"));
@@ -122,11 +94,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("message-received"));
 
-        // start service to listen to sensor data
-        // automatic start via manifest file did not work with stable mqtt connection. Needs to be started as a
-        // foreground service.
+        // start service to connect to mqtt and listen to data from wearable
+        // this service is usually autostarted on boot. The following serves as a way to restart the service,
+        // for instance if it was shutdown unintentionally.
         Intent intent = new Intent(this, DataLayerListenerService.class);
-        startService(intent);
+        startForegroundService(intent);
     }
 
     // instantiate GUI Elements

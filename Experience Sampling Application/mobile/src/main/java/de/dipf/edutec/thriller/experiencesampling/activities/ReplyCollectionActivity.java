@@ -8,15 +8,14 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
-import de.dipf.edutec.thriller.experiencesampling.support.MyRecyclerViewAdapter;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.foreground.MyRecyclerViewAdapter;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
 
 public class ReplyCollectionActivity extends AppCompatActivity implements MyRecyclerViewAdapter.ItemClickListener {
 

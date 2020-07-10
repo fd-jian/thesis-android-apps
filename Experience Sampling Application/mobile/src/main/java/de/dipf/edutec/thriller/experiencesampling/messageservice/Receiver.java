@@ -6,8 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
 
 public class Receiver extends BroadcastReceiver {
 

@@ -14,7 +14,6 @@ public class CustomApplication extends Application {
       super.onCreate();
       this.context = new ApplicationContext(
               getApplicationContext(),
-              getSystemService(NotificationManager.class),
-              R.raw.ca);
+              getSystemService(NotificationManager.class));
    }
 }

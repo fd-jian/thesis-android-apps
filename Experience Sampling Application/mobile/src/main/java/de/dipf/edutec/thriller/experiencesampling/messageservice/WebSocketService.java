@@ -1,37 +1,30 @@
 package de.dipf.edutec.thriller.experiencesampling.messageservice;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
+import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
-import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
-import de.dipf.edutec.thriller.messagestruct.MyMessage;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
-import tech.gusavila92.websocketclient.WebSocketClient;
 
 public class WebSocketService extends Service {
-    public static final String CHANNEL_ID = "ForegroundServiceChannel";
     // Static
     private static String TAG = "WebSockerService: ";
     String PATH_SMARTWATCH_TEST;
@@ -44,6 +37,7 @@ public class WebSocketService extends Service {
     Intent intent;
     int flags;
     int startid;
+    private ForegroundNotificationCreator fgNotificationManager;
 
     @Nullable
     @Override
@@ -70,21 +64,9 @@ public class WebSocketService extends Service {
         ws = client.newWebSocket(request, listener);
         //client.dispatcher().executorService().shutdown();
 
-
-        String input = intent.getStringExtra("inputExtra");
-        createNotificationChannel();
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, notificationIntent, 0);
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Foreground Service")
-                .setContentText(input)
-                .setSmallIcon(R.drawable.ic_notifications_black_24dp)
-                .setContentIntent(pendingIntent)
-                .build();
-        startForeground(1, notification);
-
-
+        startForeground(
+                fgNotificationManager.getId(),
+                fgNotificationManager.getNotification());
 
         return START_NOT_STICKY;
     }
@@ -98,18 +80,6 @@ public class WebSocketService extends Service {
         EchoWebSocketListener listener = new EchoWebSocketListener();
         ws = client.newWebSocket(request, listener);
         //client.dispatcher().executorService().shutdown();
-    }
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "Foreground Service Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(serviceChannel);
-        }
     }
 
     void sendMsgTest(final String text){
@@ -231,8 +201,14 @@ public class WebSocketService extends Service {
         }
     }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        this.fgNotificationManager =
+                ((CustomApplication) getApplication()).getContext().getForegroundNotificationCreator();
 
-
-
-
+        if (fgNotificationManager == null) {
+            throw new RuntimeException();
+        }
+    }
 }
