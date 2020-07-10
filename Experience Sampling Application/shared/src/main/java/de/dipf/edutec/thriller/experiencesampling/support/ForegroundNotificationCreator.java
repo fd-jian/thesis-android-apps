@@ -7,8 +7,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import androidx.annotation.DrawableRes;
 import androidx.core.app.NotificationCompat;
-import de.dipf.edutec.thriller.experiencesampling.R;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +22,9 @@ public class ForegroundNotificationCreator {
     private final NotificationManager notificationManager;
     private final String contentTitle;
     private final String contentText;
+
+    @DrawableRes
+    private final int iconResource;
 
     private Notification notification;
 
@@ -38,7 +41,7 @@ public class ForegroundNotificationCreator {
         notification = new NotificationCompat.Builder(context, channelId)
                 .setContentTitle(contentTitle)
                 .setContentText(contentText)
-                .setSmallIcon(R.drawable.ic_notifications_black_24dp)
+                .setSmallIcon(iconResource)
                 .setContentIntent(pendingIntent)
                 .build();
 

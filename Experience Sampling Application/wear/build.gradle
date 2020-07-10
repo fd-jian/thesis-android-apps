@@ -45,4 +45,5 @@ dependencies {
     annotationProcessor supportDependencies.lombok
     testAnnotationProcessor supportDependencies.lombok
 
+    implementation project(':shared')
 }

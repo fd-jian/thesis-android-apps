@@ -9,11 +9,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.gms.wearable.*;
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
+import de.dipf.edutec.thriller.experiencesampling.support.ForegroundNotificationCreator;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -23,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-
 
 public class SensorDataService extends WearableListenerService {
 
@@ -41,27 +41,15 @@ public class SensorDataService extends WearableListenerService {
     private CapabilityClient capabilityClient;
     private String accelerometerNodeId;
     private ChannelClient channelClient;
-    private Handler handler = new Handler();
-
-    // todo: maybe the 5 sec intervall connect is unneccessary. channel opening will succeed also if the mobile receiving app
-    //  was force killed. upon reopening the mobile app after force killing, data transmission will proceed automatically.
-    //  if the mobile device is turned off, the capability change event upon mobile device restart will trigger channel
-    //  opening through the handler method in this class. test to verify that the handler runnable can be abolished.
-//    private final Runnable openChannelRunnable = new Runnable() {
-//        @Override
-//        public void run() {
-//            Log.d(TAG, "reconnecting every " + DELAY_MILLIS / 1000 + "s");
-//            if (accelerometerNodeId != null) {
-//                openChannel();
-//            }
-//            handler.postDelayed(this, DELAY_MILLIS);
-//        }
-//    };
-//    public static final int DELAY_MILLIS = 5000;
+    private ForegroundNotificationCreator fgNotificationCreator;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        this.fgNotificationCreator = Objects.requireNonNull( (CustomApplication) getApplication())
+                .getContext().getForegroundNotificationCreator();
+
         Log.d(TAG, "Creating sensordataservice");
 
         sensorManager = Objects.requireNonNull((SensorManager)
@@ -84,7 +72,7 @@ public class SensorDataService extends WearableListenerService {
             wakeLock.acquire();
         }
 
-        startForeground(1337, buildNotification());
+        startForeground(fgNotificationCreator.getId(), fgNotificationCreator.getNotification());
 
         capabilityClient
                 .getCapability(ACCELEROMETER_RECEIVER_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
@@ -103,7 +91,9 @@ public class SensorDataService extends WearableListenerService {
         accelerometerNodeId = pickBestNodeId(connectedNodes);
         Log.d(TAG, "AccelerometerNodeId is now " + accelerometerNodeId);
 
-        openChannel();
+        if(accelerometerNodeId != null) {
+            openChannel();
+        }
     }
 
     @Override
@@ -164,7 +154,7 @@ public class SensorDataService extends WearableListenerService {
 
     private String pickBestNodeId(Set<Node> nodes) {
         String bestNodeId = null;
-        // Find a nearby node or pick one arbitrarily
+
         for (Node node : nodes) {
             if (node.isNearby()) {
                 return node.getId();
@@ -172,22 +162,6 @@ public class SensorDataService extends WearableListenerService {
             bestNodeId = node.getId();
         }
         return bestNodeId;
-    }
-
-    private Notification buildNotification() {
-        Objects.requireNonNull(getSystemService(NotificationManager.class))
-                .createNotificationChannel(
-                        new NotificationChannel(
-                                "f1",
-                                "foreground",
-                                NotificationManager.IMPORTANCE_LOW));
-
-        return new Notification.Builder(this, "f1")
-                .setOngoing(true)
-                .setContentTitle("streaming sensor data")
-//                .setSmallIcon(...)
-//                .setTicker(...)
-                .build();
     }
 
     private class AccelerometerListener implements SensorEventListener {
