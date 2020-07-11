@@ -185,12 +185,12 @@ public class SensorDataService extends WearableListenerService {
                     channelOutput.flush();
                 } catch (IOException e) {
                     Log.d(TAG, "Could not write to channel stream: " + e.getCause());
-                    closeStream(channelOutput);
                     channelOutput = null; // in case unregister takes some time to avoid repeated failures
                     sensorManager.unregisterListener(this, accelerometer);
                     Log.d(TAG, "listener unregistered and stream closed, reopening channel.");
-
                     openChannel();
+                } finally {
+                    closeStream(channelOutput);
                 }
             }
 
