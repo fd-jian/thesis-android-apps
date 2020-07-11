@@ -97,8 +97,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // start service to connect to mqtt and listen to data from wearable
         // this service is usually autostarted on boot. The following serves as a way to restart the service,
         // for instance if it was shutdown unintentionally.
-        Intent intent = new Intent(this, DataLayerListenerService.class);
-        startForegroundService(intent);
+//        Intent intent = new Intent(this, DataLayerListenerService.class);
+//        startForegroundService(intent);
     }
 
     // instantiate GUI Elements
