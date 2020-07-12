@@ -1,16 +1,13 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.PowerManager;
 import android.util.Log;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -19,55 +16,41 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.Optional;
 
 public class DataLayerListenerService extends WearableListenerService {
 
-    private static final String WEAR_WAKELOCKTAG = "wear:wakelocktag";
     private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
-    private static boolean isRunning = false;
 
     private MqttService mqttService;
-    private ForegroundNotificationCreator fgNotificationManager;
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void onChannelOpened(ChannelClient.Channel channel) {
+        Log.d(TAG, "channel opened!");
 
-        if (isRunning) {
-            Log.d(TAG, "service is already running.");
-            return START_NOT_STICKY;
+        if(!mqttService.isConnected()) {
+            mqttService.connect();
         }
 
-        isRunning = true;
+        Wearable.getChannelClient(this)
+                .getInputStream(channel)
+                .addOnSuccessListener(command -> {
 
-        Log.d(TAG, "on start command");
-
-        Optional.ofNullable((PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE))
-                .map(pm -> pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WEAR_WAKELOCKTAG))
-                .ifPresent(PowerManager.WakeLock::acquire);
-
-        startForeground(
-                fgNotificationManager.getId(),
-                fgNotificationManager.getNotification());
-
-        mqttService.connect();
-
-        return START_STICKY;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        this.mqttService.disconnect();
-        stopForeground(true);
-        isRunning = false;
-    }
-
-    @Override
-    public void onMessageReceived(MessageEvent messageEvent) {
-        byte[] data = messageEvent.getData();
-
-        handleRecord(data);
+                    // without new thread, UI hangs. but why? this is supposed to run on a separate thread!
+                    // TODO: consider finding a more elegant solution
+                    new Thread(() -> {
+                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                        Log.v(TAG, "input stream retrieved succesfully. Reading in new thread.");
+                        try {
+                            readStream(command);
+                        } catch (IOException e) {
+                            try {
+                                command.close();
+                            } catch (IOException ioException) {
+                                ioException.printStackTrace();
+                            }
+                        }
+                    }).start();
+                });
     }
 
     private void handleRecord(byte[] data) {
@@ -105,28 +88,6 @@ public class DataLayerListenerService extends WearableListenerService {
         return floats;
     }
 
-    @Override
-    public void onChannelOpened(ChannelClient.Channel channel) {
-        Log.d(TAG, "channel opened!");
-
-        Wearable.getChannelClient(this)
-                .getInputStream(channel)
-                .addOnSuccessListener(command -> {
-
-                    // without new thread, UI hangs. but why? this is supposed to run on a separate thread!
-                    // TODO: consider finding a more elegant solution
-                    new Thread(() -> {
-                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                        Log.v(TAG, "input stream retrieved succesfully. Reading in new thread.");
-                        try {
-                            readStream(command);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }).start();
-                });
-    }
-
     private void readStream(InputStream command) throws IOException {
         byte[] data = new byte[12];
         ByteArrayOutputStream tempBaos = new ByteArrayOutputStream(data.length);
@@ -143,12 +104,5 @@ public class DataLayerListenerService extends WearableListenerService {
     public void onCreate() {
         super.onCreate();
         this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
-        this.fgNotificationManager =
-                ((CustomApplication) getApplication()).getContext().getForegroundNotificationCreator();
-
-        if (mqttService == null || fgNotificationManager == null) {
-            throw new RuntimeException();
-        }
-
     }
 }
