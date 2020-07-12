@@ -6,6 +6,9 @@ from .models import *
 admin.site.register(Question)
 admin.site.register(Message)
 admin.site.register(M1_Question)
+admin.site.register(ScheduledTasks)
+
+
 
 @admin.register(User)
 class UserAdmin(DefaultUserAdmin):

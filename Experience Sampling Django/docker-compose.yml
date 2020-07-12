@@ -2,10 +2,11 @@ version: '3'
 
 services:
   redis:
-    image: redis
+    image: redis:latest
     command: redis-server
     ports:
       - '6379:6379'
+      - '6380:6380'
   web:
     build: .\experiencesampling
     command: python manage.py runserver 0.0.0.0:8000
@@ -13,14 +14,14 @@ services:
      - .:\code
     ports:
       - "8000:8000"
-  worker_channels:
-
-    build: .\experiencesampling
-    command: python manage.py runworker channels
-    volumes:
-      - .:\code
-    links:
-      - redis
+#  worker_channels:
+#
+#    build: .\experiencesampling
+#    command: python manage.py runworker channels
+#    volumes:
+#      - .:\code
+#    links:
+#      - redis
   channels:
     build: .\experiencesampling
     command: daphne -p 8001 experiencesampling.asgi:application

@@ -20,7 +20,6 @@ class Message(models.Model):
     def last_10_messages(self):
         return Message.objects.order_by('-timestamp').all()[:10]
 
-
 class Question(models.Model):
     question = models.CharField(max_length=256)
     answers = models.TextField()
@@ -34,7 +33,6 @@ class Question(models.Model):
             'Origin ': self.origin,
             'num_answers': self.num_answers
         })
-
 
 class M1_Question(models.Model):
     question = models.CharField(max_length=256, help_text="zB: Wie geht es dir?")
@@ -72,12 +70,16 @@ class M1_Question(models.Model):
     )
 
     def __str__(self):
-        return self.question
+        return "Question: {2: <15} ({0: <6}, schedule= {1: <5})".format(self.question_type,self.schedule,self.question)
 
 
 
+class ScheduledTasks(models.Model):
+    id = models.CharField(max_length=256, primary_key=True)
+    roomname = models.CharField(max_length=256)
 
-
+    def __str__(self):
+        return "{: <15} {}".format(self.roomname,self.id)
 
 
 

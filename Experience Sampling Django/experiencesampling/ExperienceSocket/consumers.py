@@ -4,14 +4,15 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import Message
 
+from .jobs import registerQuestionnaireSequence
+
+
 class ChatConsumer(WebsocketConsumer):
 
-
-
     def connect(self):
-
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'ExperienceSocket_%s' % self.room_name
+
 
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
@@ -20,9 +21,7 @@ class ChatConsumer(WebsocketConsumer):
         )
 
         self.accept()
-
-
-
+        registerQuestionnaireSequence(self.room_group_name)
 
     def disconnect(self, close_code):
         # Leave room group
@@ -74,3 +73,4 @@ class ChatConsumer(WebsocketConsumer):
             'content' : message.content,
             'timestamp' : str(message.timestamp)
         }
+

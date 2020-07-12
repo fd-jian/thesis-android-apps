@@ -51,6 +51,7 @@ SCHEDULER_CONFIG = {
     'apscheduler.executors.processpool': {
         "type": "threadpool"
     },
+    'apscheduler.timezone': 'UTC',
 }
 SCHEDULER_AUTOSTART = True
 
