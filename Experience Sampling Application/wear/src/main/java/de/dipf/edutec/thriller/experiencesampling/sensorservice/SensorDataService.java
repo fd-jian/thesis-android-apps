@@ -16,6 +16,7 @@ import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificat
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,10 +31,16 @@ public class SensorDataService extends WearableListenerService {
     private static final String TAG = "wear:" + SensorDataService.class.getSimpleName();
     private static final String ACC_TAG = "wear:" + AccelerometerListener.class.getSimpleName();
     private static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
+    private static final int[] ENABLED_SENSORS = new int[] {
+            Sensor.TYPE_LINEAR_ACCELERATION
+//            Sensor.TYPE_LINEAR_ACCELERATION,
+//            Sensor.TYPE_ACCELEROMETER,
+//            Sensor.TYPE_GYROSCOPE,
+//            Sensor.TYPE_LIGHT
+    };
 
     private PowerManager.WakeLock wakeLock;
     private AccelerometerListener accelerometerListener;
-    private Sensor accelerometer;
     private SensorManager sensorManager;
     private CapabilityClient capabilityClient;
     private String accelerometerNodeId;
@@ -47,7 +54,7 @@ public class SensorDataService extends WearableListenerService {
         this.fgNotificationCreator = Objects.requireNonNull( (CustomApplication) getApplication())
                 .getContext().getForegroundNotificationCreator();
 
-        Log.d(TAG, "Creating sensordataservice");
+        Log.i(TAG, "Creating sensordataservice");
 
         sensorManager = Objects.requireNonNull((SensorManager)
                 getApplicationContext().getSystemService(SENSOR_SERVICE));
@@ -57,7 +64,7 @@ public class SensorDataService extends WearableListenerService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "Handling intent");
+        Log.i(TAG, "Starting sensor data service.");
 
         isRunning = true;
 
@@ -80,13 +87,13 @@ public class SensorDataService extends WearableListenerService {
 
     @Override
     public void onCapabilityChanged(CapabilityInfo capabilityInfo) {
-        Log.d(TAG, "capability changed");
+        Log.i(TAG, "capability changed");
 
         Set<Node> connectedNodes = capabilityInfo.getNodes();
-        Log.d(TAG, "Updating capability: " + capabilityInfo.getName() + ", nodes found: " + connectedNodes.size());
+        Log.i(TAG, "Updating capability: " + capabilityInfo.getName() + ", nodes found: " + connectedNodes.size());
 
         accelerometerNodeId = pickBestNodeId(connectedNodes);
-        Log.d(TAG, "AccelerometerNodeId is now " + accelerometerNodeId);
+        Log.i(TAG, "AccelerometerNodeId is now " + accelerometerNodeId);
 
         if(accelerometerNodeId != null) {
             openChannel();
@@ -95,11 +102,11 @@ public class SensorDataService extends WearableListenerService {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "calling onDestroy");
+        Log.i(TAG, "onDestroy called.");
         super.onDestroy();
 
-        sensorManager.unregisterListener(accelerometerListener, accelerometer);
-        Log.d(TAG, "Unregistered accelerometer listener.");
+        sensorManager.unregisterListener(accelerometerListener);
+        Log.i(TAG, "Unregistered accelerometer listener.");
 
         Optional.ofNullable(accelerometerListener)
                 .ifPresent(AccelerometerListener::closeStream);
@@ -117,14 +124,14 @@ public class SensorDataService extends WearableListenerService {
     }
 
     private void openChannel() {
-        Log.d(TAG, "Opening channel to node id " + accelerometerNodeId);
+        Log.i(TAG, "Opening channel to node id " + accelerometerNodeId);
         channelClient = Wearable.getChannelClient(getApplicationContext());
         channelClient.openChannel(accelerometerNodeId, "/accelerometer_data")
                 .addOnSuccessListener(this::registerSensorListener);
     }
 
     public void registerSensorListener(ChannelClient.Channel channel) {
-        Log.d(TAG, "channel opened.");
+        Log.i(TAG, "channel '" + channel.getPath() + "' opened.");
         channelClient.getOutputStream(channel).addOnSuccessListener(outputStream -> {
 
             if (accelerometerListener != null) {
@@ -136,16 +143,18 @@ public class SensorDataService extends WearableListenerService {
                         SensorDataFileLogger.create(getApplicationContext()), outputStream);
             }
 
-            accelerometer = Objects.requireNonNull(
-                    sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION));
+            Arrays.stream(ENABLED_SENSORS).forEach(value -> {
+                Log.i(TAG, "Registering accelerometer listener.");
+                if (sensorManager.registerListener(
+                        accelerometerListener,
+                        Objects.requireNonNull(sensorManager.getDefaultSensor(value)),
+                        SensorManager.SENSOR_DELAY_FASTEST)) {
+                    Log.i(TAG, "Registered accelerometer listener successfully.");
+                } else {
+                    Log.e(TAG, "Could not register accelerometer listener.");
+                }
+            });
 
-            Log.d(TAG, "registering accelerometer listener");
-            if (!sensorManager.registerListener(
-                    accelerometerListener,
-                    accelerometer,
-                    SensorManager.SENSOR_DELAY_FASTEST)) {
-                Log.e(TAG, "Could not register accelerometer listener");
-            }
         });
     }
 
@@ -169,8 +178,8 @@ public class SensorDataService extends WearableListenerService {
 
         // reuse these field values to avoid reinstantiation
         private final ByteBuffer byteBuffer = ByteBuffer.allocate(4);
-        private final byte[] recordBytes = new byte[12];
-        private final byte[] floatBytes = new byte[4];
+        private final ByteBuffer byteBuffer8Byte = ByteBuffer.allocate(8);
+        private final byte[] sensorTypeBytes = new byte[4];
 
         public AccelerometerListener(SensorDataFileLogger sensorDataFileLogger, OutputStream channelOutput) {
             this.sensorDataFileLogger = sensorDataFileLogger;
@@ -181,21 +190,21 @@ public class SensorDataService extends WearableListenerService {
         public void onSensorChanged(SensorEvent event) {
             if (channelOutput != null) {
                 try {
-                    channelOutput.write(getRecordBytes(event.values));
+                    channelOutput.write(getRecordBytes(event.values, event.sensor.getType()));
                     channelOutput.flush();
                 } catch (IOException e) {
-                    Log.d(TAG, "Could not write to channel stream: " + e.getCause());
+                    Log.i(TAG, "Could not write to channel stream: " + e.getCause());
                     closeStream(channelOutput);
                     channelOutput = null; // in case unregister takes some time to avoid repeated failures
-                    sensorManager.unregisterListener(this, accelerometer);
-                    Log.d(TAG, "listener unregistered and stream closed, reopening channel.");
+                    sensorManager.unregisterListener(this);
+                    Log.i(TAG, "Sensor listener unregistered and stream closed, reopening channel.");
 
                     openChannel();
                 }
             }
 
             String out = Arrays.toString(event.values).replaceAll("[\\[\\] ]", "") + "\n";
-            Log.v(ACC_TAG, String.format("sensor data record: %s", Arrays.toString(event.values)));
+            Log.v(ACC_TAG, String.format("Sensor data record: %s", Arrays.toString(event.values)));
 
             try {
                 Optional.ofNullable(outputStream)
@@ -212,14 +221,34 @@ public class SensorDataService extends WearableListenerService {
             Log.i(ACC_TAG, "Accuracy of Accelerometer changed.");
         }
 
-        private byte[] getRecordBytes(float[] accelerometerValues) {
+        private byte[] getRecordBytes(float[] accelerometerValues, int typeLinearAcceleration) {
+
+            // 4*4 extra bytes --> sensortype (4 bytes), length (4 bytes) and timestamp (8 bytes)
+            byte[] recordBytes = new byte[40];
+
+            int offset = 0;
+            byteBuffer8Byte.putLong(Instant.now().toEpochMilli()).position(0);
+            offset += byteBuffer8Byte.get(recordBytes, offset, byteBuffer8Byte.capacity())
+                    .position(0)
+                    .capacity();
+
+            byteBuffer.putInt(typeLinearAcceleration).position(0);
+            offset += byteBuffer.get(recordBytes, offset, byteBuffer.capacity())
+                    .position(0)
+                    .capacity();
+
+            byteBuffer.putInt(accelerometerValues.length).position(0);
+            offset += byteBuffer.get(recordBytes, offset, byteBuffer.capacity())
+                    .position(0)
+                    .capacity();
+
             for (int i = 0; i < accelerometerValues.length; i++) {
                 byteBuffer.putFloat(accelerometerValues[i]).position(0);
-                byteBuffer.get(floatBytes);
-                System.arraycopy(floatBytes, 0, recordBytes, i * 4, floatBytes.length);
+                byteBuffer.get(recordBytes, i*byteBuffer.capacity() + offset, byteBuffer.capacity());
                 byteBuffer.position(0);
             }
 
+            Log.d(TAG, "converted record bytes: " + Arrays.toString(recordBytes));
             return recordBytes;
         }
 
