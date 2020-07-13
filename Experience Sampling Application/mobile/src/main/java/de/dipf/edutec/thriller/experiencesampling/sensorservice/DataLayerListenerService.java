@@ -102,22 +102,26 @@ public class DataLayerListenerService extends WearableListenerService {
             return;
         }
 
-        JSONObject sample = new JSONObject();
-        Instant now = Instant.ofEpochMilli(timestamp);
-        try {
-            sample.put("time", now.toEpochMilli());
-            sample.put("values", new JSONArray(floats));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        // TODO: seems like new thread helps against blocking channel stream for json serialization and mqtt transmission? verify!
+        new Thread(() -> {
+            JSONObject sample = new JSONObject();
+            Instant now = Instant.ofEpochMilli(timestamp);
+            try {
+                sample.put("time", now.toEpochMilli());
+                sample.put("values", new JSONArray(floats));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
-        // TODO: use session id instead of 123
+            // TODO: use session id instead of 123
 
-        String topic = String.format("sensors/%s/123", sensorName);
-        String message = sample.toString();
-        Log.v(TAG, String.format("sending MQTT message to topic %s with payload: %s", topic, message));
+            String topic = String.format("sensors/%s/123", sensorName);
+            String message = sample.toString();
+            Log.v(TAG, String.format("sending MQTT message to topic %s with payload: %s", topic, message));
 
-        mqttService.sendMessage(topic, message.getBytes());
+            mqttService.sendMessage(topic, message.getBytes());
+        }).start();
+
     }
 
     private static String getSensorSimpleName(String sensorType) {
