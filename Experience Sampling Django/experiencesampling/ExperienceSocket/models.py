@@ -97,6 +97,9 @@ class Survey(models.Model):
         help_text="Zeit in Minuten nach dem Start"
     )
 
+    def __str__(self):
+        return "Survey: {0: <15} ({2: <6}, schedule= {1: <5})".format(self.name, self.schedule, self.survey_type)
+
 class SurveyQuestion(models.Model):
     survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
     question = models.CharField(max_length=256, help_text="zB: Wie geht es dir?")
@@ -114,9 +117,6 @@ class SurveyQuestion(models.Model):
                                    help_text="zB: 'Ja, Vielleicht, Nein' oder leer lassen falls per Voice geantwortet werden soll",
                                    blank=True, null=True)
 
-    def __str__(self):
-        return "Question: {2: <15} ({0: <6}, schedule= {1: <5})".format(self.question_type, self.schedule,
-                                                                        self.question)
 
 class User(AbstractUser):
     pass
