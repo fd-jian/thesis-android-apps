@@ -3,6 +3,28 @@ from django.db import models
 from django import forms
 from django.contrib.auth.models import AbstractUser
 
+# Constant Values
+## Scheduling
+TIMING_ANSWERS = [
+    ("0", "Start"),
+    ("9999", "End"),
+]
+NUMBERS = list(range(1, 351))
+for i in NUMBERS:
+    TIMING_ANSWERS.append((str(i), str(i)))
+
+## Question Types
+QUESTION_TYPE = [
+    ("NumAns", "Numerical Answer"),
+    ("TxtAns", "Text Answer"),
+]
+
+SURVEY_TYPE = [
+    ("single", "Single Survey"),
+    ("interval", "Interval Survey"),
+]
+
+
 
 class Message(models.Model):
     content = models.TextField()
@@ -37,12 +59,6 @@ class Question(models.Model):
 class M1_Question(models.Model):
     question = models.CharField(max_length=256, help_text="zB: Wie geht es dir?")
 
-
-    QUESTION_TYPE = [
-        ("NumAns", "Numerical Answer"),
-        ("TxtAns", "Text Answer"),
-    ]
-
     question_type = models.CharField(
         max_length=6,
         choices=QUESTION_TYPE,
@@ -54,13 +70,6 @@ class M1_Question(models.Model):
 
     text_answer = models.CharField(max_length=256, help_text="zB: 'Ja, Vielleicht, Nein' oder leer lassen falls per Voice geantwortet werden soll", blank=True, null=True)
 
-    NUMBERS = list(range(1,351))
-    TIMING_ANSWERS = [
-        ("Begin", "Start"),
-        ("End", "End"),
-    ]
-    for i in NUMBERS:
-        TIMING_ANSWERS.append((str(i),str(i)))
 
     schedule = models.CharField(
         max_length=15,
@@ -73,21 +82,41 @@ class M1_Question(models.Model):
         return "Question: {2: <15} ({0: <6}, schedule= {1: <5})".format(self.question_type,self.schedule,self.question)
 
 
+class Survey(models.Model):
+    name = models.CharField(max_length=256)
+    survey_type = models.CharField(
+        max_length=15,
+        choices=SURVEY_TYPE,
+        default="single",
+        help_text="Je nach Typ ist das Scheduling in Intervallen (exklusiv Start & End!) oder einmalig."
+    )
+    schedule = models.CharField(
+        max_length=15,
+        choices=TIMING_ANSWERS,
+        default="Begin",
+        help_text="Zeit in Minuten nach dem Start"
+    )
 
-class ScheduledTasks(models.Model):
-    id = models.CharField(max_length=256, primary_key=True)
-    roomname = models.CharField(max_length=256)
+class SurveyQuestion(models.Model):
+    survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
+    question = models.CharField(max_length=256, help_text="zB: Wie geht es dir?")
+
+    question_type = models.CharField(
+        max_length=6,
+        choices=QUESTION_TYPE,
+        default="TxtAns",
+    )
+
+    numerical_answer_lower = models.IntegerField(help_text="Lower Bound", blank=True, null=True)
+    numerical_answer_upper = models.IntegerField(help_text="Upper Bound", blank=True, null=True)
+
+    text_answer = models.CharField(max_length=256,
+                                   help_text="zB: 'Ja, Vielleicht, Nein' oder leer lassen falls per Voice geantwortet werden soll",
+                                   blank=True, null=True)
 
     def __str__(self):
-        return "{: <15} {}".format(self.roomname,self.id)
-
-
-
-
-
-
-
-
+        return "Question: {2: <15} ({0: <6}, schedule= {1: <5})".format(self.question_type, self.schedule,
+                                                                        self.question)
 
 class User(AbstractUser):
     pass

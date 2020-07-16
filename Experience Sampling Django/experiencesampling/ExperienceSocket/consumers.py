@@ -3,15 +3,18 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import Message
-
+import time
 from .jobs import registerQuestionnaireSequence
 
+
+curr_open_rooms = {}
 
 class ChatConsumer(WebsocketConsumer):
 
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'ExperienceSocket_%s' % self.room_name
+
 
 
         # Join room group
@@ -21,7 +24,28 @@ class ChatConsumer(WebsocketConsumer):
         )
 
         self.accept()
-        registerQuestionnaireSequence(self.room_group_name)
+
+        delta_time = 120 * 60
+        cur_time = time.time()
+
+        try:
+            old_time = curr_open_rooms[self.room_group_name]
+            print("Roomname found " + self.room_group_name)
+
+            if cur_time - delta_time > old_time:
+                print( self.room_group_name + " is expired")
+                curr_open_rooms[self.room_group_name] = cur_time
+                registerQuestionnaireSequence(self.room_group_name)
+            else:
+                print( self.room_group_name + " is not expired")
+                curr_open_rooms[self.room_group_name] = cur_time
+
+        except:
+            print("Registered new Group")
+            curr_open_rooms[self.room_group_name] = cur_time
+            registerQuestionnaireSequence(self.room_group_name)
+
+
 
     def disconnect(self, close_code):
         # Leave room group
@@ -29,6 +53,7 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+
 
     # Receive message from WebSocket
     def receive(self, text_data):

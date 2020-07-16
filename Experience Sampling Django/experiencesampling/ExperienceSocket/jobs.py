@@ -13,22 +13,6 @@ def my_listener(event):
     print("EventListener registered Event for: " + str(event.job_id))
 
 def registerQuestionnaireSequence(groupname):
-    """for obj in M1_Question.objects.all():
-        tmp = transfromM1QuestiontoMsg(obj)
-    if (obj.schedule == "Begin"):
-        try:
-            scheduler.add_job(executeQuestionnaireSequence, 'date', run_date=getExecutionTimeSec(10),
-                              args=[groupname, tmp[0]], id=tmp[1], jobstore='default', replace_existing=True)
-        except:
-            pass
-    else:
-        try:
-            extratime = int(obj.schedule)
-            scheduler.add_job(executeQuestionnaireSequence, 'date', run_date=getExecutionTimeSec(extratime),
-                              args=[groupname, tmp[0]], id=tmp[1], jobstore='default', replace_existing=True)
-        except:
-            pass"""
-
 
     for obj in M1_Question.objects.all():
         tmp = transfromM1QuestiontoMsg(obj)
