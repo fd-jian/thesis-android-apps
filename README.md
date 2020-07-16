@@ -12,8 +12,7 @@ Um neue Models zu erstellen müssen diese in der ExperienceSocket/models.py
 erstellt werden. Anschließend müssen diese in der ExperienceSocket/admin.py
 registriert werden. Beispiele sind dort zu finden. Bevor man diese sehen kann
 sollten die Befehle "python manage.py makemigration" und "python manage.py migrate"
-ausgeführt werden, damit die Änderungen übernommen werden. Bei einzelnen Änderungen
-innerhalb einer Klasse muss man dies nicht machen. 
+ausgeführt werden, damit die Änderungen übernommen werden.
 ## Android Application
 
 ## Old
