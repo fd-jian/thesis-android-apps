@@ -1,7 +1,12 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
+import android.content.Intent;
 import android.hardware.Sensor;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Process;
 import android.util.Log;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
@@ -16,15 +21,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public class DataLayerListenerService extends WearableListenerService {
 
+    public static final String LAST_SECOND_INTENT_EXTRA = "records-per-second";
+    public static final String UPDATED_ANALYTICS_INTENT_ACTION = "updated-analytics";
+    public static final String RECORDS_PER_SECOND_INTENT_EXTRA = "records-last-second";
+    public static final int DELAY_MILLIS = 1000;
+
     private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
     private static final Map<Integer, String> sensorTopicNames;
+
     static {
         sensorTopicNames = new HashMap<>();
         sensorTopicNames.put(
@@ -43,6 +53,59 @@ public class DataLayerListenerService extends WearableListenerService {
 
     private MqttService mqttService;
 
+    private int messageCount = 0;
+    private int messageCountTotal = 0;
+    private long millisElapsed = 0;
+    private long lastUpdate = -1;
+    private long lastMessage;
+
+    private final Handler statHandler = new Handler();
+    private final Runnable stats = new Runnable() {
+        @Override
+        public void run() {
+            long now = Instant.now().toEpochMilli();
+            if (lastUpdate == -1) {
+                lastUpdate = now;
+            }
+            long sinceLastUpdate = now - lastUpdate;
+
+            int count = messageCount;
+            messageCount = 0;
+
+            millisElapsed += sinceLastUpdate;
+            lastUpdate = now;
+            long deltaMessage = now - lastMessage;
+            if (deltaMessage > 5000) {
+                millisElapsed = 0;
+                messageCountTotal = 0;
+            }
+
+            float value = 0F;
+            float v = 0F;
+            if (millisElapsed != 0) {
+                v = (float) millisElapsed / (float) 1000;
+                value = messageCountTotal / v;
+            }
+
+            Log.d(TAG, String.format("total: %s, millisElapsed: %s, seconds elapsed: %s", messageCountTotal, millisElapsed, v));
+            Log.d(TAG, String.format("Last second: %d, Per second avg: %f", count, value));
+
+            sendBroadcastUpdate(count, value);
+
+            long offset = millisElapsed % 1000;
+            statHandler.postDelayed(this, DELAY_MILLIS - offset);
+        }
+    };
+    private HandlerThread readByteDataThread;
+
+    private void sendBroadcastUpdate(int count, float value) {
+        Intent intent = new Intent();
+        intent.setAction(UPDATED_ANALYTICS_INTENT_ACTION);
+        intent.putExtra(LAST_SECOND_INTENT_EXTRA, count);
+        intent.putExtra(RECORDS_PER_SECOND_INTENT_EXTRA, value); // TODO: implement average records per second
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
     @Override
     public void onChannelOpened(ChannelClient.Channel channel) {
         Log.i(TAG, "channel opened!");
@@ -51,49 +114,46 @@ public class DataLayerListenerService extends WearableListenerService {
             mqttService.connect();
         }
 
+        readByteDataThread = new HandlerThread("Read byte data", Process.THREAD_PRIORITY_MORE_FAVORABLE);
+        readByteDataThread.start();
+
         Wearable.getChannelClient(this)
                 .getInputStream(channel)
                 .addOnSuccessListener(command -> {
-
                     // without new thread, UI hangs. but why? this is supposed to run on a separate thread!
-                    // TODO: consider finding a more elegant solution
-                    new Thread(() -> {
-                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                    // TODO: consider implementing OnSuccessListener with this class and pass itself
+                    new Handler(readByteDataThread.getLooper()).post(() -> {
                         Log.i(TAG, "Input stream for channel " + channel.getPath() + " retrieved succesfully. Reading in new thread.");
+                        statHandler.removeCallbacks(stats);
+                        statHandler.postDelayed(stats, DELAY_MILLIS);
                         try {
                             readStream(command);
-                        } catch (IOException e) {
+                        } catch (IOException ignored) { // ignored because finally handles stream closing
+                            Log.i(TAG, "Exception reading channel stream: " + ignored.getMessage());
+                        } finally {
+                            Log.d(TAG, "reading stream done, cleaning up");
                             try {
                                 command.close();
-                            } catch (IOException ioException) {
-                                ioException.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
+                            statHandler.removeCallbacks(stats);
                         }
-                    }).start();
+                    });
                 });
     }
 
     private void handleRecord(byte[] data) {
-        Log.v(TAG, "received record bytes: " + Arrays.toString(data));
+        updateCount(Instant.now().toEpochMilli());
+
         ByteBuffer buf = ByteBuffer.wrap(data);
-
         long timestamp = buf.getLong();
-        Log.v(TAG, "Sensor record timestamp: " + timestamp);
-
         int sensorType = buf.getInt();
-        Log.v(TAG, "Sensor type id: " + sensorType);
-
         String sensorName = sensorTopicNames.get(sensorType);
-        Log.v(TAG, "Sensor name is " + sensorName);
-
         int payloadLength = buf.getInt();
-        Log.v(TAG, "Sensor record payload length: " + payloadLength);
-
         float[] floats = getFloats(buf, payloadLength);
-        Log.v(TAG, "converted payload to float array: " + Arrays.toString(floats));
 
         if (!mqttService.isConnected()) {
-            Log.i(TAG, "mqtt broker is not connected");
             return;
         }
 
@@ -102,26 +162,26 @@ public class DataLayerListenerService extends WearableListenerService {
             return;
         }
 
-        // TODO: seems like new thread helps against blocking channel stream for json serialization and mqtt transmission? verify!
-        new Thread(() -> {
-            JSONObject sample = new JSONObject();
-            Instant now = Instant.ofEpochMilli(timestamp);
-            try {
-                sample.put("time", now.toEpochMilli());
-                sample.put("values", new JSONArray(floats));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        JSONObject sample = new JSONObject();
+        Instant now = Instant.ofEpochMilli(timestamp);
+        try {
+            sample.put("time", now.toEpochMilli());
+            sample.put("values", new JSONArray(floats));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-            // TODO: use session id instead of 123
+        // TODO: use session id instead of 123
+        String topic = String.format("sensors/%s/123", sensorName);
+        String message = sample.toString();
 
-            String topic = String.format("sensors/%s/123", sensorName);
-            String message = sample.toString();
-            Log.v(TAG, String.format("sending MQTT message to topic %s with payload: %s", topic, message));
+        mqttService.sendMessage(topic, message.getBytes());
+    }
 
-            mqttService.sendMessage(topic, message.getBytes());
-        }).start();
-
+    private void updateCount(long now) {
+        lastMessage = now;
+        messageCount++;
+        messageCountTotal++;
     }
 
     private static String getSensorSimpleName(String sensorType) {

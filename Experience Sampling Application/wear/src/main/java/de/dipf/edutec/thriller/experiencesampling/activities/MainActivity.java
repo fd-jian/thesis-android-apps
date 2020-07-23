@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.TextView;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
@@ -89,7 +90,22 @@ public class MainActivity extends WearableActivity {
             stopService(intent);
         });
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(
+        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
+        broadcastManager.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String last_second = String.valueOf(intent.getIntExtra(SensorDataService.LAST_SECOND_INTENT_EXTRA, 0));
+                String per_second = String.valueOf(Math.round(intent.getFloatExtra(SensorDataService.RECORDS_PER_SECOND_INTENT_EXTRA, 0) * 100)/(float) 100);
+//                Log.d(TAG, "last second: " + last_second);
+//                Log.d(TAG, "per second: " + per_second);
+                Optional.ofNullable((TextView) findViewById(R.id.last_second_text))
+                        .ifPresent(textView -> textView.setText(last_second));
+                Optional.ofNullable((TextView) findViewById(R.id.average_text))
+                        .ifPresent(textView -> textView.setText(per_second));
+            }
+        }, new IntentFilter(SensorDataService.UPDATED_ANALYTICS_INTENT_ACTION));
+
+        broadcastManager.registerReceiver(
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
@@ -100,7 +116,7 @@ public class MainActivity extends WearableActivity {
         // Ability to Receive Messages from the MessageService ( WearableListener )
         IntentFilter newFilter = new IntentFilter(Intent.ACTION_SEND);
         Receiver messageReceiver = new Receiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, newFilter);
+        broadcastManager.registerReceiver(messageReceiver, newFilter);
 
         System.out.println("Receiver registered");
 

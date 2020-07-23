@@ -3,10 +3,7 @@ package de.dipf.edutec.thriller.experiencesampling.sensorservice.transport;
 import android.os.Handler;
 import android.util.Log;
 import lombok.RequiredArgsConstructor;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.*;
 
 @RequiredArgsConstructor
 public class MqttService {
@@ -14,7 +11,7 @@ public class MqttService {
     private final static String TAG = "wear:" + MqttService.class.getSimpleName();
     private static final int RECONNECT_INTERVAL = 30000;
 
-    private final MqttClient sampleClient;
+    private final MqttAsyncClient sampleClient;
     private final MqttConnectOptions connOpts;
 
     private final static int QOS = 0;
