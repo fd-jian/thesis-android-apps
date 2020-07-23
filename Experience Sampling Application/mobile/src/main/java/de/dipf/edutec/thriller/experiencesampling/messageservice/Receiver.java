@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
+import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import de.dipf.edutec.thriller.experiencesampling.messagestruct.MyMessage;
 
@@ -31,7 +32,7 @@ public class Receiver extends BroadcastReceiver {
 
 
         if(messagesSingleton.existUUIDReceived(myMessage.getUuid()) == false){
-            System.out.println(myMessage.toString());
+            Log.v("receiver", myMessage.toString());
             messagesSingleton.addMessageReceived(myMessage);
             System.out.println("ADDED MESSAGE TO MESSAGESINGLETON");
         }
