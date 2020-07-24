@@ -2,16 +2,13 @@ package de.dipf.edutec.thriller.experiencesampling.conf;
 
 import android.app.NotificationManager;
 import android.content.Context;
-import androidx.annotation.RawRes;
-import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.CustomSslSocketFactory;
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttClientBuilder;
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.*;
 import lombok.Getter;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.jetbrains.annotations.Nullable;
 
 @Getter
 public class ApplicationContext {
@@ -25,13 +22,20 @@ public class ApplicationContext {
     private final MqttService mqttService;
     private final ForegroundNotificationCreator foregroundNotificationCreator;
 
-    public ApplicationContext(Context ctx, NotificationManager notificationManager, @RawRes int caRes) {
+    public ApplicationContext(Context ctx, NotificationManager notificationManager) {
 
         MqttConnectOptions connOpts = new MqttConnectOptions();
         connOpts.setCleanSession(true);
         connOpts.setAutomaticReconnect(true);
         connOpts.setConnectionTimeout(10);
-        connOpts.setSocketFactory(new CustomSslSocketFactory(ctx, caRes, DEVELOPMENT).create());
+        SslSocketFactoryFactory sslSocketFactoryFactory = getSslSocketFactoryWrapper(ctx);
+
+        if(sslSocketFactoryFactory != null) {
+            connOpts.setSocketFactory(sslSocketFactoryFactory.create());
+        }
+
+        connOpts.setPassword("changeme".toCharArray());
+        connOpts.setUserName("user");
 
         this.foregroundNotificationCreator = new ForegroundNotificationCreator(
                 1,
@@ -50,5 +54,20 @@ public class ApplicationContext {
                         .build()
                         .build(),
                 connOpts);
+    }
+
+    @Nullable
+    private SslSocketFactoryFactory getSslSocketFactoryWrapper(Context ctx) {
+        SslSocketFactoryFactory socketFactoryFactory = null;
+
+        if(DEVELOPMENT) {
+            socketFactoryFactory = new UnsafeSslSocketFactoryFactory();
+        } else {
+            int raw = ctx.getResources().getIdentifier("ca", "raw", ctx.getPackageName());
+            if (raw != 0) {
+                socketFactoryFactory = new CustomCaSslSocketFactoryFactory(ctx, raw);
+            }
+        }
+        return socketFactoryFactory;
     }
 }

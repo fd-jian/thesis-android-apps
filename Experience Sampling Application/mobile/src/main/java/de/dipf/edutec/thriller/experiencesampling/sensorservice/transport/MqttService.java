@@ -23,8 +23,11 @@ public class MqttService {
     private Runnable repeatingConnect = new Runnable() {
         public void run() {
             try {
-                sampleClient.connect(connOpts);
+                IMqttToken connect = sampleClient.connect(connOpts);
+                connect.waitForCompletion();
+                Log.d(TAG, "Connected");
             } catch (MqttException e) {
+                Log.e(TAG, e.getMessage());
                 Log.e(TAG, "connecting to mqtt broker failed. Retrying every minute.");
                 handler.postDelayed(this, RECONNECT_INTERVAL);
             }
@@ -48,7 +51,6 @@ public class MqttService {
     public void connect() {
         Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
         repeatingConnect.run();
-        Log.d(TAG, "Connected");
     }
 
     public boolean isConnected() {

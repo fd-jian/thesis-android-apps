@@ -1,32 +1,28 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice.transport;
 
 import android.content.Context;
+import androidx.annotation.RawRes;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 
-public class CustomSslSocketFactory {
-    private final boolean allowAllCerts;
-    private final int caRes;
+public class CustomCaSslSocketFactoryFactory implements SslSocketFactoryFactory {
     private final Context context;
+    private final int caRes;
 
-    public CustomSslSocketFactory(Context ctx, int caRes, boolean allowAllCerts) {
-        this.context = ctx;
+    public CustomCaSslSocketFactoryFactory(Context context, @RawRes int caRes) {
+        this.context = context;
         this.caRes = caRes;
-        this.allowAllCerts = allowAllCerts;
     }
 
     public SSLSocketFactory create() {
-        if(allowAllCerts) {
-            return createAllCertsTrustingFactory();
-        }
-
         InputStream caInput = context.getResources().openRawResource(caRes);
         try {
             SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -52,40 +48,6 @@ public class CustomSslSocketFactory {
             this.closeStream(caInput);
         }
 
-    }
-
-    private SSLSocketFactory createAllCertsTrustingFactory() {
-        SSLContext sslContext;
-        try {
-            sslContext = SSLContext.getInstance("TLS");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        TrustManager[] trustAllCerts = new TrustManager[] {
-                new X509TrustManager() {
-
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-
-                    public void checkClientTrusted(
-                            X509Certificate[] certs, String authType) {
-                        // trust all certificates with this TrustManagger
-                    }
-
-                    public void checkServerTrusted(
-                            X509Certificate[] certs, String authType) {
-                        // trust all certificates with this TrustManagger
-                    }
-                }
-
-        };
-        try {
-            sslContext.init(null, trustAllCerts, new SecureRandom());
-        } catch (KeyManagementException e) {
-            throw new RuntimeException(e);
-        }
-        return sslContext.getSocketFactory();
     }
 
     private void closeStream(InputStream inputStream) {

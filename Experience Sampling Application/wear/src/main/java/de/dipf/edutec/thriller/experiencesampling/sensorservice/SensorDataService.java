@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class SensorDataService extends WearableListenerService {
-    public static final int MULTIPLY_SENSOR_RECORDS_BY = 40;
+    public static final int MULTIPLY_SENSOR_RECORDS_BY = 1;
     public static final int DELAY_MILLIS = 1000;
     public static final String LAST_SECOND_INTENT_EXTRA = "records-per-second";
     public static final String UPDATED_ANALYTICS_INTENT_ACTION = "updated-analytics";
@@ -135,9 +135,6 @@ public class SensorDataService extends WearableListenerService {
 
         startForeground(fgNotificationCreator.getId(), fgNotificationCreator.getNotification());
 
-        sensorThread = new HandlerThread("Sensor thread", Process.THREAD_PRIORITY_MORE_FAVORABLE);
-        sensorThread.start();
-
         capabilityClient
                 .getCapability(ACCELEROMETER_RECEIVER_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
                 .addOnSuccessListener(this::onCapabilityChanged);
@@ -176,6 +173,9 @@ public class SensorDataService extends WearableListenerService {
             }
 
             statHandler.postDelayed(stats, DELAY_MILLIS);
+
+            sensorThread = new HandlerThread("Sensor thread", Process.THREAD_PRIORITY_MORE_FAVORABLE);
+            sensorThread.start();
 
             Arrays.stream(ENABLED_SENSORS).forEach(value -> {
                 Log.i(TAG, "Registering accelerometer listener.");
