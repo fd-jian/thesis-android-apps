@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.os.Bundle;
 
+import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.RemoteInput;
 
@@ -35,7 +36,7 @@ public class ReplyService extends IntentService {
             if(intent.getStringExtra("test").equals("textQuestion")){
                 CharSequence directReply = getMessageText(intent);
                 if (directReply != null) {
-                    System.out.println("GOT MESSAGE: " + directReply);
+                    Log.v("reply-service", "GOT MESSAGE: " + directReply);
 
                     MyMessage myMessage = MyMessage.decodeMessage(intent.getStringExtra("receivedMessageFromHandheld"));
                     myMessage.setUserAnswer(String.valueOf(directReply));

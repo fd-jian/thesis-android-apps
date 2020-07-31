@@ -1,5 +1,6 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
 
+import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -133,7 +134,7 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
             }
         });
 
-                System.out.println(myMessage.encodeMessage());
+        Log.v("testing-activity", myMessage.encodeMessage());
 
         SendMessage messageService = new SendMessage(this);
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
@@ -198,10 +199,9 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
         SendMessage messageService = new SendMessage(this);
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
-        System.out.println(myMessage.encodeMessage());
-
-
+        Log.v("testing-activity", myMessage.encodeMessage());
     }
+
     public void callSendNotificationChoices(){
         ImageView iv = findViewById(R.id.iv_testing_sendNotification1);
         GifImageView giv = findViewById(R.id.iv_testing_sendNotification1_gif);
@@ -261,6 +261,6 @@ public class TestingActivity extends AppCompatActivity implements View.OnClickLi
 
         SendMessage messageService = new SendMessage(this);
         messageService.sendMessage(this.PATH_SMARTWATCH_TEST,myMessage);
-        System.out.println(myMessage.encodeMessage());
+        Log.v("testing-activity", myMessage.encodeMessage());
     }
 }

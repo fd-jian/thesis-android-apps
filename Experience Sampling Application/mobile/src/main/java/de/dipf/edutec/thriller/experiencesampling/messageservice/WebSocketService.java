@@ -56,7 +56,7 @@ public class WebSocketService extends Service {
         messagesSingleton = MessagesSingleton.getInstance();
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        System.out.println(sp.getAll());
+        Log.v("websocket-service", sp.getAll().toString());
         String lobby = sp.getString("signature","defaultChannel");
 
         Request request = new Request.Builder().url("ws://192.168.99.100:8000/ws/chat/"+lobby+"/").build();
@@ -73,7 +73,7 @@ public class WebSocketService extends Service {
 
     public void restart(){
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        System.out.println(sp.getAll());
+        Log.v("websocket-service", sp.getAll().toString());
         String lobby = sp.getString("signature","defaultChannel");
 
         Request request = new Request.Builder().url("ws://192.168.99.100:8000/ws/chat/"+lobby+"/").build();
@@ -89,7 +89,7 @@ public class WebSocketService extends Service {
         if(MyMessage.isTypeMyMessage(msg)){
             try{
                 JSONObject reader = new JSONObject(msg);
-                System.out.println(reader);
+                Log.v("websocket-service", reader.toString());
                 String txt = reader.getString("message");
                 final MyMessage myMessage = MyMessage.decodeMessage(txt);
                 SendMessage messageService = new SendMessage(this);
@@ -145,7 +145,7 @@ public class WebSocketService extends Service {
 
         @Override
         public void onOpen(WebSocket webSocket, Response response) {
-            Log.d(TAG , "onOpen() is called.");
+            Log.v(TAG , "onOpen() is called.");
             JSONObject obj = new JSONObject();
             try {
                 obj.put("message" , "Smartphone opened Connection");
@@ -189,8 +189,8 @@ public class WebSocketService extends Service {
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
             sendConnectionUpdate("false");
-            Log.d("W TAG ", "onFailure() is called.");
-            Log.d(TAG, "waiting some time..");
+            Log.v("W TAG ", "onFailure() is called.");
+            Log.v(TAG, "waiting some time..");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

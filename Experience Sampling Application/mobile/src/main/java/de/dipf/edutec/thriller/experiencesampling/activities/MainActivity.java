@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
             String connected = intent.getStringExtra("message");
-            Log.d("receiver", "Got message: " + connected);
+            Log.v("receiver", "Got message: " + connected);
             if(connected.equals("true")){
                 //bt_database.setCompoundDrawableTintList(ColorStateList.valueOf(getResources().getColor(R.color.green_ok, null)));
                 getSupportActionBar().setTitle(Html.fromHtml("Exp. Sampling: <font color='#4CAF50'> Online </font>", 1));
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
             String connected = intent.getStringExtra("message");
-            Log.d("receiver", "Got message: " + connected);
+            Log.v("receiver", "Got message: " + connected);
             msgToHandle +=1;
             ActionItemBadge.update(menu.findItem(R.id.item_samplebadge),MessagesSingleton.getInstance().numOpenMessages);
 
