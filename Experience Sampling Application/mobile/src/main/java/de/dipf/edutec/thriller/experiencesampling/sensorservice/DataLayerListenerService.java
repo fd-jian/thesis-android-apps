@@ -49,6 +49,15 @@ public class DataLayerListenerService extends WearableListenerService {
         sensorTopicNames.put(
                 Sensor.TYPE_LIGHT,
                 getSensorSimpleName(Sensor.STRING_TYPE_LIGHT));
+//        sensorTopicNames.put(
+//                Sensor.TYPE_ACCELEROMETER,
+//                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
+//        sensorTopicNames.put(
+//                Sensor.TYPE_GYROSCOPE,
+//                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
+//        sensorTopicNames.put(
+//                Sensor.TYPE_LIGHT,
+//                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
     }
 
     private MqttService mqttService;

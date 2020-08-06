@@ -172,7 +172,7 @@ public class SensorDataService extends WearableListenerService {
                 accelerometerListener = new AccelerometerListener(outputStream);
             }
 
-            statHandler.postDelayed(stats, DELAY_MILLIS);
+            statHandler.post(stats);
 
             sensorThread = new HandlerThread("Sensor thread", Process.THREAD_PRIORITY_MORE_FAVORABLE);
             sensorThread.start();
