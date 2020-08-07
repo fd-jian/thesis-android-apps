@@ -50,6 +50,9 @@ dependencies {
     annotationProcessor supportDependencies.lombok
     testAnnotationProcessor supportDependencies.lombok
 
+    // auth
+    implementation 'com.google.android.gms:play-services-auth:18.1.0'
+
     implementation project(':shared')
 
     // Default
