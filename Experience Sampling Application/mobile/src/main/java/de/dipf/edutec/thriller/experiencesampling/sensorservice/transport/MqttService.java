@@ -23,9 +23,8 @@ public class MqttService {
     private Runnable repeatingConnect = new Runnable() {
         public void run() {
             try {
-                IMqttToken connect = sampleClient.connect(connOpts);
-                connect.waitForCompletion();
-                Log.d(TAG, "Connected");
+                doConnect();
+                handler.removeCallbacks(this);
             } catch (MqttException e) {
                 Log.e(TAG, e.getMessage());
                 Log.e(TAG, "connecting to mqtt broker failed. Retrying every minute.");
@@ -34,8 +33,14 @@ public class MqttService {
         }
     };
 
-    public void sendMessage(String topic, byte[] content) {
+    public IMqttToken doConnect() throws MqttException {
+        IMqttToken connect = sampleClient.connect(connOpts);
+        connect.waitForCompletion();
+        Log.d(TAG, "Connected");
+        return connect;
+    }
 
+    public void sendMessage(String topic, byte[] content) {
         try {
 //            Log.d(TAG, "Publishing message to topic '" + topic + "': " + content);
             MqttMessage message = new MqttMessage(content);
@@ -53,13 +58,28 @@ public class MqttService {
         repeatingConnect.run();
     }
 
+    public void loginCheck() throws MqttException {
+        Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
+        IMqttToken connect = sampleClient.connect(connOpts);
+        connect.waitForCompletion();
+        Log.d(TAG, "Connected");
+        try {
+            IMqttToken disconnect = sampleClient.disconnect();
+            disconnect.waitForCompletion();
+            Log.d(TAG, "Disconnected");
+        } catch (MqttException e) {
+            handleException(e);
+        }
+    }
+
     public boolean isConnected() {
         return sampleClient.isConnected();
     }
 
     public void disconnect() {
         try {
-            sampleClient.disconnect();
+            IMqttToken disconnect = sampleClient.disconnect();
+            disconnect.waitForCompletion();
         } catch (MqttException me) {
             handleException(me);
         }
