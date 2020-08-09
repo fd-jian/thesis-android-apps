@@ -1,4 +1,10 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.text.TextUtils;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -31,6 +37,7 @@ import pl.droidsonroids.gif.GifImageButton;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
+    public static final String ACCOUNT_TYPE = "com.udinic.auth_example";
 
     // GUI Elements
     GifImageButton dummy2;
@@ -70,8 +77,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    @Override
+    protected void onResume() {
+        super.onResume();
 
+        AccountManager accountManager = AccountManager.get(this);
 
+        Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
+        if (accountsByType.length == 0) {
+            final AccountManagerFuture<Bundle> future = accountManager.addAccount(ACCOUNT_TYPE, null, null, null, this, new AccountManagerCallback<Bundle>() {
+                @Override
+                public void run(AccountManagerFuture<Bundle> future) {
+                    try {
+                        Bundle bnd = future.getResult();
+                        showMessage("Account was created");
+                        Log.d("udinic", "AddNewAccount Bundle is " + bnd);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        showMessage(e.getMessage());
+                    }
+                }
+            }, null);
+        } else {
+//            TODO: check password and redirect to login if unsuccessful
+//            Account account = accountsByType[0];
+//            String name = account.name;
+//            accountManager.getPassword(account);
+        }
+    }
+
+    private void showMessage(final String msg) {
+        if (TextUtils.isEmpty(msg))
+            return;
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

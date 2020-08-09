@@ -46,68 +46,8 @@ public class ApplicationContext {
             connOpts.setSocketFactory(sslSocketFactoryFactory.create());
         }
 
-        // TODO: put this right after the successful login to mqtt client with provided credentials
-//        CredentialsClient client = Credentials.getClient(ctx);
-//        Credential cred = new Credential.Builder("username")
-//                .setPassword("password")
-//                .setAccountType("thriller")
-//                .build();
-//
-//        client.save(cred).addOnCompleteListener(task -> {
-//            if (task.isSuccessful()) {
-//                Log.d("tag", "SAVE: OK");
-//                Toast.makeText(ctx, "Credentials saved", Toast.LENGTH_SHORT).show();
-//                return;
-//            }
-//
-//            Exception e = task.getException();
-//            if (e instanceof ResolvableApiException) {
-//                // Try to resolve the save request. This will prompt the user if
-//                // the credential is new.
-//                ResolvableApiException rae = (ResolvableApiException) e;
-//                try {
-//                    rae.startResolutionForResult(activity, 1);
-//                } catch (IntentSender.SendIntentException exception) {
-//                    // Could not resolve the request
-//                    Log.e("tag", "Failed to send resolution.", exception);
-//                    Toast.makeText(ctx, "Save failed", Toast.LENGTH_SHORT).show();
-//                }
-//            } else {
-//                Toast.makeText(ctx, "Save failed", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-
-        // TODO: put this right before mqtt connection is established to retrieve stored username and password AND
-        //  also before initial login. in the first case, it is a background service so it should fail silently.
-        //  in the second case, after app start, the user has to be redirected to login on error
-//        CredentialsClient client = Credentials.getClient(ctx);
-//        CredentialRequest build = new CredentialRequest.Builder()
-//                .setPasswordLoginSupported(true)
-//                .setAccountTypes("thriller")
-//                .build();
-//
-//        client.request(build).addOnCompleteListener(command -> {
-//            if(command.isSuccessful()) {
-//                Credential credential = command.getResult().getCredential();
-//                String accountType = credential.getAccountType();
-//
-//                if (accountType == null) {
-//                    //signInWithPassword(credential.getId(), credential.getPassword());
-//                } else if (accountType.equals("thriller")) {
-//                    // user is already signed in with thriller
-//                }
-//                return;
-//            }
-//
-//            Exception e = command.getException();
-//            Log.e("appcontext", "Could not retrieve user credentials from store: ");
-//            Log.e("appcontext", e.getMessage());
-//            e.printStackTrace();
-//            // redirect to login
-//        });
-
-        connOpts.setPassword("changeme".toCharArray());
-        connOpts.setUserName("user");
+//        connOpts.setPassword("changeme".toCharArray());
+//        connOpts.setUserName("user");
 
         this.foregroundNotificationCreator = new ForegroundNotificationCreator(
                 1,
@@ -121,6 +61,7 @@ public class ApplicationContext {
 
         mqttService = new MqttService(
                 MqttClientBuilder.builder()
+                        .broker(MQTT_BROKER_URL)
                         .clientId(getUuid(ctx).toString())
                         .build()
                         .build(),

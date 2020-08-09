@@ -8,6 +8,12 @@
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+    <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
 <!--    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />-->
 
     <application
@@ -28,6 +34,14 @@
 <!--                <action android:name="android.intent.action.BOOT_COMPLETED"/>-->
 <!--            </intent-filter>-->
 <!--        </receiver>-->
+
+        <service android:name=".auth.AuthenticatorService">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data android:name="android.accounts.AccountAuthenticator"
+                       android:resource="@xml/authenticator" />
+        </service>
 
         <service
                 android:name=".sensorservice.DataLayerListenerService"
@@ -63,7 +77,6 @@
                     android:value=".activities.MainActivity"/>
         </activity>
 
-
         <activity
                 android:name=".activities.ReplyCollectionActivity"
                 android:label="@string/title_acitivty_replyCollection"
@@ -72,6 +85,8 @@
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value=".activities.MainActivity"/>
         </activity>
+
+        <activity android:name=".activities.LoginActivity" />
 
         <activity android:name=".activities.MainActivity">
             <intent-filter>

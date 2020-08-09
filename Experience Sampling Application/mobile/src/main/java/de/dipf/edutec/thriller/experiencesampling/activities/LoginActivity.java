@@ -13,6 +13,10 @@ import android.widget.Toast;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
+import org.eclipse.paho.client.mqttv3.MqttException;
+
+import static org.eclipse.paho.client.mqttv3.MqttException.REASON_CODE_CLIENT_CONNECTED;
+import static org.eclipse.paho.client.mqttv3.MqttException.REASON_CODE_NOT_AUTHORIZED;
 
 public class LoginActivity extends AccountAuthenticatorActivity {
 
@@ -22,7 +26,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     public final static String ARG_IS_ADDING_NEW_ACCOUNT = "IS_ADDING_ACCOUNT";
 
     public static final String KEY_ERROR_MESSAGE = "ERR_MSG";
-
+    public static final String KEY_ERROR_CODE = "ERR_CODE";
     public final static String PARAM_USER_PASS = "USER_PASS";
 
     private final int REQ_SIGNUP = 1;
@@ -38,6 +42,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "creating login activity");
         super.onCreate(savedInstanceState);
         this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
         setContentView(R.layout.act_login);
@@ -60,14 +65,6 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         });
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if (requestCode == REQ_SIGNUP && resultCode == RESULT_OK) {
-//            finishLogin(data);
-//        } else
-//            super.onActivityResult(requestCode, resultCode, data);
-//    }
-
     public void submit() {
 
         final String userName = ((TextView) findViewById(R.id.accountName)).getText().toString();
@@ -78,17 +75,20 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         new AsyncTask<String, Void, Intent>() {
 
             @Override
-            protected Intent doInBackground(String... params) {
+        protected Intent doInBackground(String... params) {
                 Bundle data = new Bundle();
                 try {
                     // todo: add user specific login data to mqtt request
-                    mqttService.loginCheck();
+                    mqttService.loginCheck(userName, userPass);
                     data.putString(AccountManager.KEY_ACCOUNT_NAME, userName);
                     data.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);
 //                    data.putString(AccountManager.KEY_AUTHTOKEN, authtoken);
                     data.putString(PARAM_USER_PASS, userPass);
-                } catch (Exception e) {
+                    data.putString(AccountManager.KEY_USERDATA, "");
+                } catch (MqttException e) {
+                    data.putInt(KEY_ERROR_CODE, e.getReasonCode());
                     data.putString(KEY_ERROR_MESSAGE, e.getMessage());
+                    Log.d(TAG, "mqtt error: " + e);
                 }
 
                 final Intent res = new Intent();
@@ -99,6 +99,12 @@ public class LoginActivity extends AccountAuthenticatorActivity {
             @Override
             protected void onPostExecute(Intent intent) {
                 if (intent.hasExtra(KEY_ERROR_MESSAGE)) {
+                    if (intent.hasExtra(KEY_ERROR_CODE) && intent.getIntExtra(KEY_ERROR_CODE,0) == REASON_CODE_CLIENT_CONNECTED) {
+                        setAccountAuthenticatorResult(intent.getExtras());
+                        setResult(RESULT_OK, intent);
+                        finish();
+                        return;
+                    }
                     Toast.makeText(getBaseContext(), intent.getStringExtra(KEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
                 } else {
                     finishLogin(intent);
@@ -110,6 +116,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     private void finishLogin(Intent intent) {
         String accountName = intent.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
         String accountPassword = intent.getStringExtra(PARAM_USER_PASS);
+
         final Account account = new Account(accountName, intent.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE));
 
         if (getIntent().getBooleanExtra(ARG_IS_ADDING_NEW_ACCOUNT, false)) {

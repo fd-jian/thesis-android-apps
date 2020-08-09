@@ -58,6 +58,18 @@ public class MqttService {
         repeatingConnect.run();
     }
 
+    public void connect(String username, String password) {
+        connOpts.setUserName(username);
+        connOpts.setPassword(password.toCharArray());
+        connect();
+    }
+
+    public void loginCheck(String username, String password) throws MqttException {
+        connOpts.setUserName(username);
+        connOpts.setPassword(password.toCharArray());
+        loginCheck();
+    }
+
     public void loginCheck() throws MqttException {
         Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
         IMqttToken connect = sampleClient.connect(connOpts);

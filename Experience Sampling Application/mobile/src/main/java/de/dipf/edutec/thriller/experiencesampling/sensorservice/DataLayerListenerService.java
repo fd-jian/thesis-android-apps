@@ -1,17 +1,22 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
+import android.accounts.*;
+import android.accounts.OperationCanceledException;
 import android.content.Intent;
 import android.hardware.Sensor;
-import android.os.Handler;
-import android.os.HandlerThread;
+import android.os.*;
 import android.os.Process;
 import android.util.Log;
+import android.widget.Toast;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
+import de.dipf.edutec.thriller.experiencesampling.activities.LoginActivity;
+import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +29,10 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static de.dipf.edutec.thriller.experiencesampling.activities.MainActivity.ACCOUNT_TYPE;
+import static org.eclipse.paho.client.mqttv3.MqttException.REASON_CODE_FAILED_AUTHENTICATION;
+import static org.eclipse.paho.client.mqttv3.MqttException.REASON_CODE_NOT_AUTHORIZED;
 
 public class DataLayerListenerService extends WearableListenerService {
 
@@ -119,8 +128,46 @@ public class DataLayerListenerService extends WearableListenerService {
     public void onChannelOpened(ChannelClient.Channel channel) {
         Log.i(TAG, "channel opened!");
 
+        AccountManager accountManager = AccountManager.get(getApplicationContext());
+        Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
+
+        if(accountsByType.length == 0) {
+            Log.e(TAG,"Account not found.");
+            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+            return;
+        }
+
+        Account account = accountsByType[0];
+
+        accountManager.setPassword(account, "bohelel");
+
         if(!mqttService.isConnected()) {
-            mqttService.connect();
+            try {
+                String password = accountManager.getPassword(account);
+                String name = account.name;
+                mqttService.loginCheck(name, password);
+                mqttService.connect(name, password);
+            } catch (MqttException e) {
+               // TODO: prevent opening login screens multiple times
+                if (e.getReasonCode() == REASON_CODE_NOT_AUTHORIZED || e.getReasonCode() == REASON_CODE_FAILED_AUTHENTICATION) {
+                    Log.e(TAG, "Authentication to MQTT failed");
+                    AccountManagerFuture<Bundle> bundleAccountManagerFuture = accountManager.updateCredentials(account, null, null, null, null, null);
+                    new Thread(()-> {
+                        try {
+                            Bundle result = bundleAccountManagerFuture.getResult();
+                            Intent intent = result.getParcelable(AccountManager.KEY_INTENT);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                        } catch (AuthenticatorException | IOException | OperationCanceledException authenticatorException) {
+                            authenticatorException.printStackTrace();
+                            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }).start();
+                    return;
+                }
+                Log.e(TAG, e.getMessage());
+            }
+
         }
 
         readByteDataThread = new HandlerThread("Read byte data", Process.THREAD_PRIORITY_MORE_FAVORABLE);
