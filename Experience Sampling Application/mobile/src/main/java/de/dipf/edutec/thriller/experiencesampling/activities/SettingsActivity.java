@@ -1,7 +1,11 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Window;
 import android.widget.Toast;
 
@@ -22,7 +26,10 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.dialogs.ProgressDialog;
+
+import static de.dipf.edutec.thriller.experiencesampling.activities.MainActivity.ACCOUNT_TYPE;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -60,6 +67,24 @@ public class SettingsActivity extends AppCompatActivity {
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
+            findPreference("credentials").setOnPreferenceClickListener(preference -> {
+                        AccountManager accountManager = AccountManager.get(getContext());
+                        Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
+
+                        if (accountsByType.length == 0) {
+                            Log.e(TAG,"Account not found.");
+                            startActivity(new Intent(getContext(), MainActivity.class));
+                            return true;
+                        }
+
+                        accountManager.updateCredentials(accountsByType[0], null, null, getActivity(), null, null);
+                        return true;
+                    }
+            );
+
+            findPreference("host").setOnPreferenceClickListener(this::disconnect);
+            findPreference("port").setOnPreferenceClickListener(this::disconnect);
+
             this.connectedDevicesList = findPreference(getResources().getString(R.string.key_connected_devices));
             this.connectedDevicesList.setOnPreferenceClickListener(this);
             setListConnectedDevices();
@@ -77,6 +102,11 @@ public class SettingsActivity extends AppCompatActivity {
             this.connectedBluetoothDevices = new ArrayList<String>();
             this.connectedBluetoothValues = new ArrayList<String>();
 
+        }
+
+        private boolean disconnect(Preference preference) {
+            ((CustomApplication) getActivity().getApplication()).getContext().getMqttService().disconnect();
+            return true;
         }
 
         @Override

@@ -1,8 +1,4 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
 import android.text.TextUtils;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,12 +22,13 @@ import android.widget.LinearLayout;
 
 import com.mikepenz.actionitembadge.library.ActionItemBadge;
 
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.DataLayerListenerService;
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.WebSocketService;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.AccountConnector;
 import pl.droidsonroids.gif.GifImageButton;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -81,30 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
 
-        AccountManager accountManager = AccountManager.get(this);
-
-        Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
-        if (accountsByType.length == 0) {
-            final AccountManagerFuture<Bundle> future = accountManager.addAccount(ACCOUNT_TYPE, null, null, null, this, new AccountManagerCallback<Bundle>() {
-                @Override
-                public void run(AccountManagerFuture<Bundle> future) {
-                    try {
-                        Bundle bnd = future.getResult();
-                        showMessage("Account was created");
-                        Log.d("udinic", "AddNewAccount Bundle is " + bnd);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        showMessage(e.getMessage());
-                    }
-                }
-            }, null);
-        } else {
-//            TODO: check password and redirect to login if unsuccessful
-//            Account account = accountsByType[0];
-//            String name = account.name;
-//            accountManager.getPassword(account);
-        }
+        AccountConnector.connect(this, false, false, ((CustomApplication) getApplication()).getContext().getMqttService());
     }
 
     private void showMessage(final String msg) {

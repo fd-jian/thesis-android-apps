@@ -58,15 +58,17 @@ public class MqttService {
         repeatingConnect.run();
     }
 
-    public void connect(String username, String password) {
+    public void connect(String username, String password, String url) {
         connOpts.setUserName(username);
         connOpts.setPassword(password.toCharArray());
+        connOpts.setServerURIs(new String[] { url });
         connect();
     }
 
-    public void loginCheck(String username, String password) throws MqttException {
+    public void loginCheck(String username, String password, String url) throws MqttException {
         connOpts.setUserName(username);
         connOpts.setPassword(password.toCharArray());
+        connOpts.setServerURIs(new String[] { url });
         loginCheck();
     }
 
