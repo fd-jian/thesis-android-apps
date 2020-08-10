@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.preference.PreferenceManager;
+import com.google.android.material.textfield.TextInputLayout;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.AccountConnector;
@@ -66,8 +67,8 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
     public void submit() {
 
-        final String userName = ((TextView) findViewById(R.id.accountName)).getText().toString();
-        final String userPass = ((TextView) findViewById(R.id.accountPassword)).getText().toString();
+        final String userName = ((TextInputLayout) findViewById(R.id.accountName)).getEditText().getText().toString();
+        final String userPass = ((TextInputLayout) findViewById(R.id.accountPassword)).getEditText().getText().toString();
 
         final String accountType = getIntent().getStringExtra(ARG_ACCOUNT_TYPE);
 

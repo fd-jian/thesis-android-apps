@@ -54,13 +54,8 @@ public class AccountConnector {
 
         Account account = accountsByType[0];
 
-        // TODO: remove
-//        accountManager.setPassword(account, "bohelel");
-
         if (!mqttService.isConnected()) {
             String url = String.format("ssl://%s:%s", host, port);
-            // TODO: remove the following test
-//            String url = String.format("ssl://%s:8234", host, port);
             try {
                 String password = accountManager.getPassword(account);
                 String name = account.name;

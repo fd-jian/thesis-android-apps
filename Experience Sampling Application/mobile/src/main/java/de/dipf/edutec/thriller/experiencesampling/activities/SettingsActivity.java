@@ -62,11 +62,11 @@ public class SettingsActivity extends AppCompatActivity {
         // To Change Preferences
         public ListPreference connectedDevicesList;
 
-
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
+            // TODO: update credentials does not work (does not check apply new credentials)
             findPreference("credentials").setOnPreferenceClickListener(preference -> {
                         AccountManager accountManager = AccountManager.get(getContext());
                         Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
@@ -99,9 +99,8 @@ public class SettingsActivity extends AppCompatActivity {
             ListPreference updateRateList = findPreference(getResources().getString(R.string.key_update_rate));
             updateRateList.setOnPreferenceClickListener(this);
 
-            this.connectedBluetoothDevices = new ArrayList<String>();
-            this.connectedBluetoothValues = new ArrayList<String>();
-
+            this.connectedBluetoothDevices = new ArrayList<>();
+            this.connectedBluetoothValues = new ArrayList<>();
         }
 
         private boolean disconnect(Preference preference) {

@@ -2,33 +2,22 @@ package de.dipf.edutec.thriller.experiencesampling.conf;
 
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
-import android.util.Log;
-import android.widget.Toast;
-import com.google.android.gms.auth.api.credentials.*;
-import com.google.android.gms.common.api.ResolvableApiException;
 import de.dipf.edutec.thriller.experiencesampling.activities.MainActivity;
 import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.*;
 import lombok.Getter;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Getter
 public class ApplicationContext {
-    // TODO: unsafe certificate validation for development, turn off later
     private static final boolean DEVELOPMENT = true;
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
     private static final String NOTIFICATION_CONTENT_TITLE = "App is still running";
     private static final String NOTIFICATION_CONTENT_TEXT = "Tap to go back to the app.";
-
-    // TODO: make user configurable
-    private static final String MQTT_BROKER_URL = "ssl://flex-pc:8883";
 
     private final MqttService mqttService;
     private final ForegroundNotificationCreator foregroundNotificationCreator;
@@ -46,9 +35,6 @@ public class ApplicationContext {
             connOpts.setSocketFactory(sslSocketFactoryFactory.create());
         }
 
-//        connOpts.setPassword("changeme".toCharArray());
-//        connOpts.setUserName("user");
-
         this.foregroundNotificationCreator = new ForegroundNotificationCreator(
                 1,
                 CHANNEL_ID,
@@ -61,7 +47,6 @@ public class ApplicationContext {
 
         mqttService = new MqttService(
                 MqttClientBuilder.builder()
-                        .broker(MQTT_BROKER_URL)
                         .clientId(getUuid(ctx).toString())
                         .build()
                         .build(),

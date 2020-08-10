@@ -11,8 +11,10 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class MqttClientBuilder {
-    
-    private String broker;
+
+    @Builder.Default
+    // TODO: find solution to get rid of dummy url
+    private String broker = "ssl://example:8883";
     private String clientId;
 
     @Builder.Default

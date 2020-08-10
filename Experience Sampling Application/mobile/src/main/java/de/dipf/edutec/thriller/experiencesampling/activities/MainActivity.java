@@ -34,7 +34,7 @@ import pl.droidsonroids.gif.GifImageButton;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
-    public static final String ACCOUNT_TYPE = "com.udinic.auth_example";
+    public static final String ACCOUNT_TYPE = "thriller";
 
     // GUI Elements
     GifImageButton dummy2;
