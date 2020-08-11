@@ -36,8 +36,12 @@
                 app:useSimpleSummaryProvider="true" />
 
         <Preference
-                app:key="credentials"
+                app:key="edit_credentials"
                 app:title="Change Login Credentials" />
+
+        <Preference
+                app:key="remove_credentials"
+                app:title="Remove Login Credentials" />
 
     </PreferenceCategory>
 

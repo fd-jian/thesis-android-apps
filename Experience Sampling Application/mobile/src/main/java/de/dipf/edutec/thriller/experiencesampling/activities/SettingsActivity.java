@@ -2,12 +2,10 @@ package de.dipf.edutec.thriller.experiencesampling.activities;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,8 +15,6 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.NodeClient;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
@@ -27,7 +23,6 @@ import java.util.concurrent.ExecutionException;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
-import de.dipf.edutec.thriller.experiencesampling.dialogs.ProgressDialog;
 
 import static de.dipf.edutec.thriller.experiencesampling.activities.MainActivity.ACCOUNT_TYPE;
 
@@ -61,26 +56,50 @@ public class SettingsActivity extends AppCompatActivity {
 
         // To Change Preferences
         public ListPreference connectedDevicesList;
+        private AccountManager accountManager;
+
+        private Account getAccount() {
+            Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
+            if (accountsByType.length == 0) {
+                Log.e(TAG, "Account not found.");
+                return null;
+            }
+            return accountsByType[0];
+        }
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
+            accountManager = AccountManager.get(getContext());
+
+
+            Preference removeCredentials = findPreference("remove_credentials");
+            Account account = getAccount();
+            if(account == null) {
+                removeCredentials.setEnabled(false);
+            }
+
             // TODO: update credentials does not work (does not check apply new credentials)
-            findPreference("credentials").setOnPreferenceClickListener(preference -> {
-                        AccountManager accountManager = AccountManager.get(getContext());
-                        Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
+            findPreference("edit_credentials").setOnPreferenceClickListener(preference -> {
+                Account ac = getAccount();
+                if (ac == null) {
+                    Log.e(TAG,"Account not found.");
+                    startActivity(new Intent(getContext(), MainActivity.class));
+                    return true;
+                }
 
-                        if (accountsByType.length == 0) {
-                            Log.e(TAG,"Account not found.");
-                            startActivity(new Intent(getContext(), MainActivity.class));
-                            return true;
-                        }
+                accountManager.updateCredentials(ac, null, null, getActivity(), null, null);
+                removeCredentials.setEnabled(true);
+                return true;
+            });
 
-                        accountManager.updateCredentials(accountsByType[0], null, null, getActivity(), null, null);
-                        return true;
-                    }
-            );
+            removeCredentials.setOnPreferenceClickListener(preference -> {
+                accountManager.removeAccount(getAccount(), getActivity(), null, null);
+                preference.setEnabled(false);
+                disconnect();
+                return true;
+            });
 
             findPreference("host").setOnPreferenceClickListener(this::disconnect);
             findPreference("port").setOnPreferenceClickListener(this::disconnect);
@@ -104,6 +123,10 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private boolean disconnect(Preference preference) {
+            return disconnect();
+        }
+
+        private boolean disconnect() {
             ((CustomApplication) getActivity().getApplication()).getContext().getMqttService().disconnect();
             return true;
         }

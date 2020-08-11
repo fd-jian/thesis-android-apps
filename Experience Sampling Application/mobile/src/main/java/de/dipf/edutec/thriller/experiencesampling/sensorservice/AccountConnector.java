@@ -43,7 +43,7 @@ public class AccountConnector {
                             Intent intent = bnd.getParcelable(AccountManager.KEY_INTENT);
                             if(isFlagNew) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             ctx.startActivity(intent);
-                            Toast.makeText(applicationContext, "Account was created", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(applicationContext, "Please create an Account first.", Toast.LENGTH_SHORT).show();
                         } catch (Exception e) {
                             e.printStackTrace();
                             Toast.makeText(applicationContext, e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -96,6 +96,7 @@ public class AccountConnector {
                 Toast.makeText(applicationContext, e.getReasonCode() + " ;" + e.getCause().toString(), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, String.valueOf(e.getReasonCode()));
                 Log.e(TAG, e.getCause().toString());
+                return false;
             }
 
         }

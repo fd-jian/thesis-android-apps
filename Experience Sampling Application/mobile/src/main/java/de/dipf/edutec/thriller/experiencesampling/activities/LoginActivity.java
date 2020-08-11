@@ -43,6 +43,15 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     private String host;
     private String port;
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mqttService.isConnected() && getIntent().getBooleanExtra(ARG_IS_ADDING_NEW_ACCOUNT, false)) {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }
+    }
+
     /**
      * Called when the activity is first created.
      */
@@ -90,6 +99,9 @@ public class LoginActivity extends AccountAuthenticatorActivity {
                 Bundle data = new Bundle();
 
                 try {
+                    if (mqttService.isConnected()) {
+                        mqttService.disconnect();
+                    }
                     mqttService.loginCheck(userName, userPass, String.format("ssl://%s:%s", host, port));
                     data.putString(AccountManager.KEY_ACCOUNT_NAME, userName);
                     data.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);

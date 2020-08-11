@@ -1,8 +1,4 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
-import android.text.TextUtils;
-import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
@@ -19,16 +15,16 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.mikepenz.actionitembadge.library.ActionItemBadge;
-
-import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
-
 import de.dipf.edutec.thriller.experiencesampling.R;
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.WebSocketService;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.AccountConnector;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import pl.droidsonroids.gif.GifImageButton;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -77,20 +73,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+        MqttService mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
 
-        AccountConnector.connect(this, false, false, ((CustomApplication) getApplication()).getContext().getMqttService());
-    }
-
-    private void showMessage(final String msg) {
-        if (TextUtils.isEmpty(msg))
-            return;
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
-            }
-        });
+        if(!mqttService.isConnected()) {
+            AccountConnector.connect(this, false, false, mqttService);
+        }
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.os.*;
 import android.os.Process;
 import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
@@ -60,6 +61,7 @@ public class DataLayerListenerService extends WearableListenerService {
     }
 
     private MqttService mqttService;
+    private ChannelClient.Channel channel;
 
     private int messageCount = 0;
     private int messageCountTotal = 0;
@@ -117,38 +119,53 @@ public class DataLayerListenerService extends WearableListenerService {
     @Override
     public void onChannelOpened(ChannelClient.Channel channel) {
         Log.i(TAG, "channel opened!");
+        this.channel = channel;
+        this.readByteDataThread = new HandlerThread("Read byte data", Process.THREAD_PRIORITY_MORE_FAVORABLE);
+        this.readByteDataThread.start();
 
-        if(!AccountConnector.connect(this, true, false, mqttService)) {
-            return;
-        }
+        // TODO: generate new session uuid
 
-        readByteDataThread = new HandlerThread("Read byte data", Process.THREAD_PRIORITY_MORE_FAVORABLE);
-        readByteDataThread.start();
+        AccountConnector.connect(this, true, false, mqttService);
 
         Wearable.getChannelClient(this)
                 .getInputStream(channel)
-                .addOnSuccessListener(command -> {
-                    // without new thread, UI hangs. but why? this is supposed to run on a separate thread!
-                    // TODO: consider implementing OnSuccessListener with this class and pass itself
-                    new Handler(readByteDataThread.getLooper()).post(() -> {
-                        Log.i(TAG, "Input stream for channel " + channel.getPath() + " retrieved succesfully. Reading in new thread.");
-                        statHandler.removeCallbacks(stats);
-                        statHandler.postDelayed(stats, DELAY_MILLIS);
-                        try {
-                            readStream(command);
-                        } catch (IOException ignored) { // ignored because finally handles stream closing
-                            Log.i(TAG, "Exception reading channel stream: " + ignored.getMessage());
-                        } finally {
-                            Log.d(TAG, "reading stream done, cleaning up");
-                            try {
-                                command.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            statHandler.removeCallbacks(stats);
-                        }
-                    });
-                });
+                .addOnSuccessListener(this::startProcessing);
+    }
+
+    public void startProcessing(InputStream command) {
+        // without new thread, UI hangs. but why? this is supposed to run on a separate thread!
+        new Handler(readByteDataThread.getLooper()).post(() -> {
+            Log.i(TAG, "Input stream for channel " + channel.getPath() + " retrieved succesfully. Reading in new thread.");
+            statHandler.removeCallbacks(stats);
+            statHandler.postDelayed(stats, DELAY_MILLIS);
+            try {
+                readStream(command);
+            } catch (IOException ignored) { // ignored because finally handles stream closing
+                Log.i(TAG, "Exception reading channel stream: " + ignored.getMessage());
+            } finally {
+                Log.d(TAG, "reading stream done, cleaning up");
+                try {
+                    command.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                statHandler.removeCallbacks(stats);
+            }
+        });
+    }
+
+    private void readStream(InputStream command) throws IOException {
+        // 24 byte max length of the values array between all sensor types (6 float numbers).
+        // + 8 byte timestamp + 4 byte sensor type + 4 byte length value
+        byte[] data = new byte[40];
+        ByteArrayOutputStream tempBaos = new ByteArrayOutputStream(data.length);
+        int c;
+        Log.i(TAG, "Start reading channel input stream");
+        while ((c = command.read(data, 0, data.length)) != -1) {
+            tempBaos.write(data, 0, c);
+            handleRecord(tempBaos.toByteArray());
+            tempBaos.reset();
+        }
     }
 
     private void handleRecord(byte[] data) {
@@ -206,23 +223,11 @@ public class DataLayerListenerService extends WearableListenerService {
         return floats;
     }
 
-    private void readStream(InputStream command) throws IOException {
-        // 24 byte max length of the values array between all sensor types (6 float numbers).
-        // + 8 byte timestamp + 4 byte sensor type + 4 byte length value
-        byte[] data = new byte[40];
-        ByteArrayOutputStream tempBaos = new ByteArrayOutputStream(data.length);
-        int c;
-        Log.i(TAG, "Start reading channel input stream");
-        while ((c = command.read(data, 0, data.length)) != -1) {
-            tempBaos.write(data, 0, c);
-            handleRecord(tempBaos.toByteArray());
-            tempBaos.reset();
-        }
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
         this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
     }
+
+
 }
