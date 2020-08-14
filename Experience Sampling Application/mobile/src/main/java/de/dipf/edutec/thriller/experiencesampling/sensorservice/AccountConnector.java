@@ -34,11 +34,7 @@ public class AccountConnector {
         Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
 
         if (accountsByType.length == 0) {
-            Toast.makeText(applicationContext, "No login credentials found but offline mode selected. " +
-                    "You can sign in through Settings -> 'Change Login Credentials'.", Toast.LENGTH_LONG).show();
             if (!redirect) {
-                Toast.makeText(applicationContext, "No login credentials found but offline mode selected. " +
-                        "You can sign in through Settings -> 'Change Login Credentials'.", Toast.LENGTH_LONG).show();
                 if (!isFlagNew) {
                     Toast.makeText(applicationContext, "No login credentials found but offline mode selected. " +
                             "You can sign in through Settings -> 'Change Login Credentials'.", Toast.LENGTH_LONG).show();
@@ -78,7 +74,6 @@ public class AccountConnector {
                 Log.e(TAG, String.valueOf(e.getReasonCode()));
                 Log.e(TAG, e.getCause().toString());
 
-                // TODO: prevent opening login screens multiple times
                 if (e.getReasonCode() == REASON_CODE_NOT_AUTHORIZED ||
                         e.getReasonCode() == REASON_CODE_FAILED_AUTHENTICATION) {
 

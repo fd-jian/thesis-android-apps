@@ -43,6 +43,10 @@
                 app:key="remove_credentials"
                 app:title="Remove Login Credentials" />
 
+        <Preference
+                app:key="user_id"
+                app:title="User ID" />
+
     </PreferenceCategory>
 
 

@@ -2,11 +2,12 @@ package de.dipf.edutec.thriller.experiencesampling.activities;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.content.Intent;
+import android.content.*;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 
+import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.ListPreference;
@@ -78,7 +79,6 @@ public class SettingsActivity extends AppCompatActivity {
                 removeCredentials.setEnabled(false);
             }
 
-            // TODO: update credentials does not work (does not check apply new credentials)
             findPreference("edit_credentials").setOnPreferenceClickListener(preference -> {
                 Account ac = getAccount();
                 if (ac == null) {
@@ -101,6 +101,21 @@ public class SettingsActivity extends AppCompatActivity {
 
             findPreference("host").setOnPreferenceClickListener(this::disconnect);
             findPreference("port").setOnPreferenceClickListener(this::disconnect);
+
+            Preference userId = findPreference("user_id");
+//            userId.setEnabled(false);
+            userId.setOnPreferenceClickListener(preference -> {
+                Log.e(TAG, "on user id tap");
+                ClipboardManager clipboardManager = (ClipboardManager)
+                        getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("user id", preference.getSummary());
+                clipboardManager.setPrimaryClip(clip);
+                Toast.makeText(getActivity(), "User ID copied to clipboard.", Toast.LENGTH_LONG).show();
+                return true;
+            });
+            userId.setSummary(getActivity().getApplicationContext()
+                            .getSharedPreferences(getActivity().getApplicationContext().getPackageName(), Context.MODE_PRIVATE)
+                            .getString("UUID", ""));
 
             this.connectedDevicesList = findPreference(getResources().getString(R.string.key_connected_devices));
             this.connectedDevicesList.setOnPreferenceClickListener(this);

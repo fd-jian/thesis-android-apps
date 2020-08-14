@@ -1,6 +1,8 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.os.*;
 import android.os.Process;
@@ -24,6 +26,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.loginScreenActive;
 
@@ -61,6 +64,9 @@ public class DataLayerListenerService extends WearableListenerService {
 //                Sensor.TYPE_LIGHT,
 //                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
     }
+
+    private static String userId;
+    private static String sessionId;
 
     private MqttService mqttService;
     private ChannelClient.Channel channel;
@@ -114,7 +120,7 @@ public class DataLayerListenerService extends WearableListenerService {
         Intent intent = new Intent();
         intent.setAction(UPDATED_ANALYTICS_INTENT_ACTION);
         intent.putExtra(LAST_SECOND_INTENT_EXTRA, count);
-        intent.putExtra(RECORDS_PER_SECOND_INTENT_EXTRA, value); // TODO: implement average records per second
+        intent.putExtra(RECORDS_PER_SECOND_INTENT_EXTRA, value);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -125,13 +131,15 @@ public class DataLayerListenerService extends WearableListenerService {
         this.readByteDataThread = new HandlerThread("Read byte data", Process.THREAD_PRIORITY_MORE_FAVORABLE);
         this.readByteDataThread.start();
 
-        // TODO: generate new session uuid
-
         AccountConnector.connect(this, true, false, !loginScreenActive, mqttService);
 
         Wearable.getChannelClient(this)
                 .getInputStream(channel)
                 .addOnSuccessListener(this::startProcessing);
+
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(getApplicationContext().getPackageName(), Context.MODE_PRIVATE);
+        userId = sharedPreferences.getString("UUID", null);
+        sessionId = UUID.randomUUID().toString();
     }
 
     public void startProcessing(InputStream command) {
@@ -184,9 +192,16 @@ public class DataLayerListenerService extends WearableListenerService {
         if (!mqttService.isConnected()) {
             return;
         }
-
         if (sensorName == null) {
             Log.e(TAG, String.format("Topic name not defined for sensor type %s", sensorType));
+            return;
+        }
+        if (userId == null) {
+            Log.e(TAG, "User ID was not found in shared preferences.");
+            return;
+        }
+        if (sessionId == null) {
+            Log.e(TAG, "Session ID was not found.");
             return;
         }
 
@@ -199,8 +214,7 @@ public class DataLayerListenerService extends WearableListenerService {
             e.printStackTrace();
         }
 
-        // TODO: use session id instead of 123
-        String topic = String.format("sensors/%s/123", sensorName);
+        String topic = String.format("sensors/%s/%s/%s", sensorName, userId, sessionId);
         String message = sample.toString();
 
         mqttService.sendMessage(topic, message.getBytes());

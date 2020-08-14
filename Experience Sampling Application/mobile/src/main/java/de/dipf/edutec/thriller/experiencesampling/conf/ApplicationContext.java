@@ -59,7 +59,7 @@ public class ApplicationContext {
         String string = pref.getString("UUID", null);
         if(string == null){
             clientId = UUID.randomUUID();
-            pref.edit().putString("UUID", clientId.toString());
+            pref.edit().putString("UUID", clientId.toString()).apply();
         } else {
             clientId = UUID.fromString(string);
         }
