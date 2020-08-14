@@ -45,8 +45,6 @@ public class SettingsActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-
-
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener {
@@ -57,6 +55,7 @@ public class SettingsActivity extends AppCompatActivity {
         // To Change Preferences
         public ListPreference connectedDevicesList;
         private AccountManager accountManager;
+        private Preference removeCredentials;
 
         private Account getAccount() {
             Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
@@ -73,8 +72,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             accountManager = AccountManager.get(getContext());
 
-
-            Preference removeCredentials = findPreference("remove_credentials");
+            removeCredentials = findPreference("remove_credentials");
             Account account = getAccount();
             if(account == null) {
                 removeCredentials.setEnabled(false);
@@ -85,7 +83,7 @@ public class SettingsActivity extends AppCompatActivity {
                 Account ac = getAccount();
                 if (ac == null) {
                     Log.e(TAG,"Account not found.");
-                    startActivity(new Intent(getContext(), MainActivity.class));
+                    accountManager.addAccount(ACCOUNT_TYPE, null, null, null, getActivity(), null, null);
                     return true;
                 }
 
@@ -120,6 +118,12 @@ public class SettingsActivity extends AppCompatActivity {
 
             this.connectedBluetoothDevices = new ArrayList<>();
             this.connectedBluetoothValues = new ArrayList<>();
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            removeCredentials.setEnabled(getAccount() != null);
         }
 
         private boolean disconnect(Preference preference) {

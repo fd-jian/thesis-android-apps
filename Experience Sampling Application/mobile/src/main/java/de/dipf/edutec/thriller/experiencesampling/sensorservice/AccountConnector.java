@@ -13,7 +13,6 @@ import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttSe
 import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 
 import static de.dipf.edutec.thriller.experiencesampling.activities.MainActivity.ACCOUNT_TYPE;
 import static org.eclipse.paho.client.mqttv3.MqttException.*;
@@ -21,7 +20,7 @@ import static org.eclipse.paho.client.mqttv3.MqttException.*;
 public class AccountConnector {
     private static final String TAG = AccountConnector.class.getSimpleName();
 
-    public static boolean connect(Context ctx, boolean isFlagNew, boolean checkLoginOnly, MqttService mqttService) {
+    public static boolean connect(Context ctx, boolean isFlagNew, boolean checkLoginOnly, boolean redirect, MqttService mqttService) {
         Context applicationContext = ctx.getApplicationContext();
         SharedPreferences sharedPreferences =
                 PreferenceManager.getDefaultSharedPreferences(applicationContext);
@@ -35,7 +34,18 @@ public class AccountConnector {
         Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
 
         if (accountsByType.length == 0) {
-            final AccountManagerFuture<Bundle> future = accountManager.addAccount(ACCOUNT_TYPE, null, null, null, null,
+            Toast.makeText(applicationContext, "No login credentials found but offline mode selected. " +
+                    "You can sign in through Settings -> 'Change Login Credentials'.", Toast.LENGTH_LONG).show();
+            if (!redirect) {
+                Toast.makeText(applicationContext, "No login credentials found but offline mode selected. " +
+                        "You can sign in through Settings -> 'Change Login Credentials'.", Toast.LENGTH_LONG).show();
+                if (!isFlagNew) {
+                    Toast.makeText(applicationContext, "No login credentials found but offline mode selected. " +
+                            "You can sign in through Settings -> 'Change Login Credentials'.", Toast.LENGTH_LONG).show();
+                }
+                return false;
+            }
+            accountManager.addAccount(ACCOUNT_TYPE, null, null, null, null,
                     future1 -> {
                         try {
                             Bundle bnd = future1.getResult();
@@ -43,10 +53,10 @@ public class AccountConnector {
                             Intent intent = bnd.getParcelable(AccountManager.KEY_INTENT);
                             if(isFlagNew) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             ctx.startActivity(intent);
-                            Toast.makeText(applicationContext, "Please create an Account first.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(applicationContext, "Please create an Account first.", Toast.LENGTH_LONG).show();
                         } catch (Exception e) {
                             e.printStackTrace();
-                            Toast.makeText(applicationContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(applicationContext, e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     }, null);
             return false;
@@ -64,11 +74,23 @@ public class AccountConnector {
                     mqttService.connect(name, password, url);
                 }
             } catch (MqttException e) {
+                Toast.makeText(applicationContext, e.getReasonCode() + " ;" + e.getCause().toString(), Toast.LENGTH_LONG).show();
+                Log.e(TAG, String.valueOf(e.getReasonCode()));
+                Log.e(TAG, e.getCause().toString());
+
                 // TODO: prevent opening login screens multiple times
                 if (e.getReasonCode() == REASON_CODE_NOT_AUTHORIZED ||
                         e.getReasonCode() == REASON_CODE_FAILED_AUTHENTICATION) {
+
+                    if (!redirect) {
+                        if (!isFlagNew) {
+                            Toast.makeText(applicationContext, "Login failed but offline mode selected. " +
+                                    "You can sign in through Settings -> 'Change Login Credentials'.", Toast.LENGTH_LONG).show();
+                        }
+                        return false;
+                    }
+
                     Log.e("TAG", "Authentication to MQTT failed");
-                    AccountManagerFuture<Bundle> bundleAccountManagerFuture =
                             accountManager.updateCredentials(account, null, null, null, future -> {
                                 try {
                                     Bundle result = future.getResult();
@@ -77,25 +99,10 @@ public class AccountConnector {
                                     ctx.startActivity(intent);
                                 } catch (AuthenticatorException | IOException | OperationCanceledException authenticatorException) {
                                     authenticatorException.printStackTrace();
-                                    Toast.makeText(applicationContext, e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(applicationContext, e.getMessage(), Toast.LENGTH_LONG).show();
                                 }
                             }, null);
-                    return false;
-                } else {
-                    boolean wrongPort = e.getReasonCode() == REASON_CODE_SERVER_CONNECT_ERROR;
-                    boolean wrongHost = e.getReasonCode() == REASON_CODE_CLIENT_EXCEPTION &&
-                            e.getCause() instanceof UnknownHostException;
-
-                    Log.e(TAG, String.valueOf(e.getReasonCode()));
-                    Log.e(TAG, e.getCause().toString());
-
-                    if (!checkPortAndHost(ctx, isFlagNew, applicationContext, wrongHost, wrongPort, false))
-                        return false;
                 }
-
-                Toast.makeText(applicationContext, e.getReasonCode() + " ;" + e.getCause().toString(), Toast.LENGTH_SHORT).show();
-                Log.e(TAG, String.valueOf(e.getReasonCode()));
-                Log.e(TAG, e.getCause().toString());
                 return false;
             }
 
@@ -120,7 +127,7 @@ public class AccountConnector {
             Intent intent = new Intent(applicationContext, SettingsActivity.class);
             if(isFlagNew) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             ctx.startActivity(intent);
-            Toast.makeText(applicationContext, out, Toast.LENGTH_SHORT).show();
+            Toast.makeText(applicationContext, out, Toast.LENGTH_LONG).show();
             return false;
         }
         return true;

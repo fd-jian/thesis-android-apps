@@ -54,6 +54,7 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
         final Intent intent = new Intent(mContext, LoginActivity.class);
         intent.putExtra(LoginActivity.ARG_ACCOUNT_TYPE, account.type);
 //        intent.putExtra(LoginActivity.ARG_AUTH_TYPE, authTokenType);
+        intent.putExtra(LoginActivity.ARG_ACCOUNT_NAME, account.name);
         intent.putExtra(LoginActivity.ARG_IS_ADDING_NEW_ACCOUNT, false);
         intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
 

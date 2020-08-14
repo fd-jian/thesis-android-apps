@@ -2,8 +2,11 @@ package de.dipf.edutec.thriller.experiencesampling.sensorservice.transport;
 
 import android.os.Handler;
 import android.util.Log;
+import de.dipf.edutec.thriller.experiencesampling.conf.Globals;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.paho.client.mqttv3.*;
+
+import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.useOffline;
 
 @RequiredArgsConstructor
 public class MqttService {
@@ -34,9 +37,11 @@ public class MqttService {
     };
 
     public IMqttToken doConnect() throws MqttException {
+        Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
         IMqttToken connect = sampleClient.connect(connOpts);
         connect.waitForCompletion();
         Log.d(TAG, "Connected");
+        useOffline = false;
         return connect;
     }
 
@@ -54,7 +59,7 @@ public class MqttService {
     }
 
     public void connect() {
-        Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
+        handler.removeCallbacks(repeatingConnect);
         repeatingConnect.run();
     }
 
@@ -74,9 +79,7 @@ public class MqttService {
 
     public void loginCheck() throws MqttException {
         Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
-        IMqttToken connect = sampleClient.connect(connOpts);
-        connect.waitForCompletion();
-        Log.d(TAG, "Connected");
+        doConnect();
         try {
             IMqttToken disconnect = sampleClient.disconnect();
             disconnect.waitForCompletion();
@@ -87,7 +90,11 @@ public class MqttService {
     }
 
     public boolean isConnected() {
-        return sampleClient.isConnected();
+        boolean connected = sampleClient.isConnected();
+        if (connected) {
+            useOffline = false;
+        }
+        return connected;
     }
 
     public void disconnect() {

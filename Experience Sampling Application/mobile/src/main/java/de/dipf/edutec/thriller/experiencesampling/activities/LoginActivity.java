@@ -8,18 +8,20 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
+import android.widget.Button;
 import android.widget.Toast;
 import androidx.preference.PreferenceManager;
 import com.google.android.material.textfield.TextInputLayout;
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.AccountConnector;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
+import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
 
+import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.loginScreenActive;
+import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.useOffline;
 import static de.dipf.edutec.thriller.experiencesampling.sensorservice.AccountConnector.checkPortAndHost;
 import static org.eclipse.paho.client.mqttv3.MqttException.*;
 
@@ -37,7 +39,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
 
     private final int REQ_SIGNUP = 1;
 
-    private final String TAG = this.getClass().getSimpleName();
+    private static final String TAG = LoginActivity.class.getSimpleName();
 
     private MqttService mqttService;
     private String host;
@@ -46,10 +48,16 @@ public class LoginActivity extends AccountAuthenticatorActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        loginScreenActive = true;
         if (mqttService.isConnected() && getIntent().getBooleanExtra(ARG_IS_ADDING_NEW_ACCOUNT, false)) {
-            startActivity(new Intent(this, MainActivity.class));
+            redirectToMain();
             finish();
         }
+    }
+
+    private void redirectToMain() {
+        startActivity(new Intent(this, MainActivity.class));
+        loginScreenActive = false;
     }
 
     /**
@@ -62,16 +70,29 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
         setContentView(R.layout.act_login);
 
-        String accountName = getIntent().getStringExtra(ARG_ACCOUNT_NAME);
-//        mAuthTokenType = getIntent().getStringExtra(ARG_AUTH_TYPE);
-//        if (mAuthTokenType == null)
-//            mAuthTokenType = AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS;
+        Intent intent = getIntent();
+        String accountName = intent.getStringExtra(ARG_ACCOUNT_NAME);
 
         if (accountName != null) {
-            ((TextView)findViewById(R.id.accountName)).setText(accountName);
+            ((TextInputLayout)findViewById(R.id.accountName)).getEditText().setText(accountName);
         }
 
-        findViewById(R.id.submit).setOnClickListener(v -> submit());
+        Button cancel = findViewById(R.id.cancel);
+        Button submit = findViewById(R.id.submit);
+        if(intent.getBooleanExtra(LoginActivity.ARG_IS_ADDING_NEW_ACCOUNT, false)) {
+            cancel.setOnClickListener(v -> { redirectToMain(); useOffline = true; });
+        } else {
+            cancel.setOnClickListener(v -> finish());
+            cancel.setText("Cancel");
+            submit.setText("Update");
+        }
+        submit.setOnClickListener(v -> submit());
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        loginScreenActive = false;
     }
 
     public void submit() {
@@ -91,59 +112,90 @@ public class LoginActivity extends AccountAuthenticatorActivity {
             finish();
             return;
         }
+        new LoginTask(this, userName, userPass, host, port, accountType).execute();
+    }
 
-        new AsyncTask<String, Void, Intent>() {
+    private static class LoginTask extends AsyncTask<String, Void, Intent> {
+        private final WeakReference<LoginActivity> activityWeakReference;
+        private final WeakReference<String> userNameWeak;
+        private final WeakReference<String> passwordWeak;
+        private final WeakReference<String> hostWeak;
+        private final WeakReference<String> portWeak;
+        private final WeakReference<String> accountTypeWeak;
 
-            @Override
-            protected Intent doInBackground(String... params) {
-                Bundle data = new Bundle();
+        public LoginTask(LoginActivity loginActivity, String userName, String password, String host, String port, String accountType) {
+            this.activityWeakReference = new WeakReference<>(loginActivity);
+            this.userNameWeak = new WeakReference<>(userName);
+            this.passwordWeak = new WeakReference<>(password);
+            this.hostWeak = new WeakReference<>(host);
+            this.portWeak = new WeakReference<>(port);
+            this.accountTypeWeak = new WeakReference<>(accountType);
+        }
 
-                try {
-                    if (mqttService.isConnected()) {
-                        mqttService.disconnect();
-                    }
-                    mqttService.loginCheck(userName, userPass, String.format("ssl://%s:%s", host, port));
-                    data.putString(AccountManager.KEY_ACCOUNT_NAME, userName);
-                    data.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);
+        @Override
+        protected Intent doInBackground(String... params) {
+            LoginActivity loginActivity = activityWeakReference.get();
+            String userName = userNameWeak.get();
+            String userPass = passwordWeak.get();
+            String host = hostWeak.get();
+            String port = portWeak.get();
+            String accountType = accountTypeWeak.get();
+
+            if(loginActivity == null || loginActivity.isFinishing() ||
+                    userName == null ||
+                    userPass == null ||
+                    host == null ||
+                    port == null ||
+                    accountType == null) {
+                return new Intent();
+            }
+            Bundle data = new Bundle();
+
+            try {
+                if (loginActivity.mqttService.isConnected()) {
+                    loginActivity.mqttService.disconnect();
+                }
+                loginActivity.mqttService.loginCheck(userName, userPass, String.format("ssl://%s:%s", host, port));
+                loginActivity.mqttService.connect();
+                data.putString(AccountManager.KEY_ACCOUNT_NAME, userName);
+                data.putString(AccountManager.KEY_ACCOUNT_TYPE, accountType);
 //                    data.putString(AccountManager.KEY_AUTHTOKEN, authtoken);
-                    data.putString(PARAM_USER_PASS, userPass);
-                    data.putString(AccountManager.KEY_USERDATA, "");
-                } catch (MqttException e) {
-                    data.putInt(KEY_ERROR_CODE, e.getReasonCode());
-                    data.putString(KEY_ERROR_MESSAGE, e.getMessage());
-                    data.putBoolean(ERROR_UNKNOWN_HOST, e.getCause() instanceof UnknownHostException);
-                    Log.d(TAG, "mqtt error: " + e);
-                }
-
-                final Intent res = new Intent();
-                res.putExtras(data);
-                return res;
+                data.putString(PARAM_USER_PASS, userPass);
+                data.putString(AccountManager.KEY_USERDATA, "");
+            } catch (MqttException e) {
+                data.putInt(KEY_ERROR_CODE, e.getReasonCode());
+                data.putString(KEY_ERROR_MESSAGE, e.getMessage());
+                data.putBoolean(ERROR_UNKNOWN_HOST, e.getCause() instanceof UnknownHostException);
+                Log.d(TAG, "mqtt error: " + e);
             }
 
-            @Override
-            protected void onPostExecute(Intent intent) {
-                if (intent.hasExtra(KEY_ERROR_MESSAGE)) {
-                    if(intent.hasExtra(KEY_ERROR_CODE)) {
-                        int code = intent.getIntExtra(KEY_ERROR_CODE, 0);
-                        if (code == REASON_CODE_CLIENT_CONNECTED) {
-                            setAccountAuthenticatorResult(intent.getExtras());
-                            setResult(RESULT_OK, intent);
-                            finish();
-                            return;
-                        } else {
-                            boolean wrongPort = code == REASON_CODE_SERVER_CONNECT_ERROR;
-                            boolean wrongHost = code == REASON_CODE_CLIENT_EXCEPTION && intent.getBooleanExtra(ERROR_UNKNOWN_HOST, false);
+            final Intent res = new Intent();
+            res.putExtras(data);
+            return res;
+        }
 
-                            if (!checkPortAndHost(LoginActivity.this, false, getApplicationContext(), wrongHost, wrongPort, false))
-                                return;
-                        }
+        @Override
+        protected void onPostExecute(Intent intent) {
+            LoginActivity loginActivity = activityWeakReference.get();
+            if(loginActivity == null || loginActivity.isFinishing()) {
+                return;
+            }
+            if (intent.hasExtra(KEY_ERROR_MESSAGE)) {
+                if(intent.hasExtra(KEY_ERROR_CODE)) {
+                    int code = intent.getIntExtra(KEY_ERROR_CODE, 0);
+                    if (code == REASON_CODE_CLIENT_CONNECTED) {
+                        loginActivity.setAccountAuthenticatorResult(intent.getExtras());
+                        loginActivity.setResult(RESULT_OK, intent);
+                        loginActivity.finish();
+                        return;
                     }
-                    Toast.makeText(getBaseContext(), intent.getStringExtra(KEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
-                } else {
-                    finishLogin(intent);
                 }
+                Toast.makeText(loginActivity.getBaseContext(), intent.getStringExtra(KEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
+            } else {
+                loginActivity.finishLogin(intent);
             }
-        }.execute();
+        }
+
     }
 
     private void finishLogin(Intent intent) {
@@ -155,13 +207,7 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         AccountManager accountManager = AccountManager.get(this);
 
         if (getIntent().getBooleanExtra(ARG_IS_ADDING_NEW_ACCOUNT, false)) {
-//            String authtoken = intent.getStringExtra(AccountManager.KEY_AUTHTOKEN);
-//            String authtokenType = mAuthTokenType;
-
-            // Creating the account on the device and setting the auth token we got
-            // (Not setting the auth token will cause another call to the server to authenticate the user)
             accountManager.addAccountExplicitly(account, accountPassword, null);
-//            accountManager.setAuthToken(account, authtokenType, authtoken);
         } else {
             accountManager.setPassword(account, accountPassword);
         }

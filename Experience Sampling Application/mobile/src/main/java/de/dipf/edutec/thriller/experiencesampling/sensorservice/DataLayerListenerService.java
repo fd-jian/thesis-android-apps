@@ -6,11 +6,11 @@ import android.os.*;
 import android.os.Process;
 import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
+import de.dipf.edutec.thriller.experiencesampling.conf.Globals;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,6 +24,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.loginScreenActive;
 
 public class DataLayerListenerService extends WearableListenerService {
 
@@ -62,6 +64,7 @@ public class DataLayerListenerService extends WearableListenerService {
 
     private MqttService mqttService;
     private ChannelClient.Channel channel;
+    private HandlerThread readByteDataThread;
 
     private int messageCount = 0;
     private int messageCountTotal = 0;
@@ -106,7 +109,6 @@ public class DataLayerListenerService extends WearableListenerService {
             statHandler.postDelayed(this, DELAY_MILLIS - offset);
         }
     };
-    private HandlerThread readByteDataThread;
 
     private void sendBroadcastUpdate(int count, float value) {
         Intent intent = new Intent();
@@ -125,7 +127,7 @@ public class DataLayerListenerService extends WearableListenerService {
 
         // TODO: generate new session uuid
 
-        AccountConnector.connect(this, true, false, mqttService);
+        AccountConnector.connect(this, true, false, !loginScreenActive, mqttService);
 
         Wearable.getChannelClient(this)
                 .getInputStream(channel)
@@ -150,6 +152,7 @@ public class DataLayerListenerService extends WearableListenerService {
                     e.printStackTrace();
                 }
                 statHandler.removeCallbacks(stats);
+                readByteDataThread.quitSafely();
             }
         });
     }
