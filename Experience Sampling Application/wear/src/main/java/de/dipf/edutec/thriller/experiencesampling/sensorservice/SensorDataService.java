@@ -51,6 +51,7 @@ public class SensorDataService extends WearableListenerService {
     private CapabilityClient capabilityClient;
     private String accelerometerNodeId;
     private ChannelClient channelClient;
+    private ChannelClient.Channel channel;
     private ForegroundNotificationCreator fgNotificationCreator;
     private HandlerThread sensorThread;
     private LocalBroadcastManager broadcastManager;
@@ -163,6 +164,7 @@ public class SensorDataService extends WearableListenerService {
     }
 
     public void registerSensorListener(ChannelClient.Channel channel) {
+        this.channel = channel;
         channelClient.getOutputStream(channel).addOnSuccessListener(outputStream -> {
             if (accelerometerListener != null) {
                 Log.d(TAG, "listener not null. set new outputstream");
@@ -211,6 +213,8 @@ public class SensorDataService extends WearableListenerService {
         super.onDestroy();
         isRunning = false;
         cleanup(accelerometerListener);
+
+        Optional.ofNullable(channel).ifPresent(channel -> channelClient.close(channel));
 
         Log.i(TAG, "Unregistered accelerometer listener.");
 
