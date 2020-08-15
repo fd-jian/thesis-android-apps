@@ -103,7 +103,7 @@ public class SensorDataService extends WearableListenerService {
         Intent intent = new Intent();
         intent.setAction(UPDATED_ANALYTICS_INTENT_ACTION);
         intent.putExtra(LAST_SECOND_INTENT_EXTRA, count);
-        intent.putExtra(RECORDS_PER_SECOND_INTENT_EXTRA, value); // TODO: implement average records per second
+        intent.putExtra(RECORDS_PER_SECOND_INTENT_EXTRA, value);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 

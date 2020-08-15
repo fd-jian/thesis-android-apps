@@ -2,8 +2,11 @@ package de.dipf.edutec.thriller.experiencesampling.sensorservice.transport;
 
 import android.os.Handler;
 import android.util.Log;
+import de.dipf.edutec.thriller.experiencesampling.conf.Globals;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.paho.client.mqttv3.*;
+
+import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.useOffline;
 
 @RequiredArgsConstructor
 public class MqttService {
@@ -23,9 +26,8 @@ public class MqttService {
     private Runnable repeatingConnect = new Runnable() {
         public void run() {
             try {
-                IMqttToken connect = sampleClient.connect(connOpts);
-                connect.waitForCompletion();
-                Log.d(TAG, "Connected");
+                doConnect();
+                handler.removeCallbacks(this);
             } catch (MqttException e) {
                 Log.e(TAG, e.getMessage());
                 Log.e(TAG, "connecting to mqtt broker failed. Retrying every minute.");
@@ -34,8 +36,16 @@ public class MqttService {
         }
     };
 
-    public void sendMessage(String topic, byte[] content) {
+    public IMqttToken doConnect() throws MqttException {
+        Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
+        IMqttToken connect = sampleClient.connect(connOpts);
+        connect.waitForCompletion();
+        Log.d(TAG, "Connected");
+        useOffline = false;
+        return connect;
+    }
 
+    public void sendMessage(String topic, byte[] content) {
         try {
 //            Log.d(TAG, "Publishing message to topic '" + topic + "': " + content);
             MqttMessage message = new MqttMessage(content);
@@ -49,17 +59,48 @@ public class MqttService {
     }
 
     public void connect() {
-        Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
+        handler.removeCallbacks(repeatingConnect);
         repeatingConnect.run();
     }
 
+    public void connect(String username, String password, String url) {
+        connOpts.setUserName(username);
+        connOpts.setPassword(password.toCharArray());
+        connOpts.setServerURIs(new String[] { url });
+        connect();
+    }
+
+    public void loginCheck(String username, String password, String url) throws MqttException {
+        connOpts.setUserName(username);
+        connOpts.setPassword(password.toCharArray());
+        connOpts.setServerURIs(new String[] { url });
+        loginCheck();
+    }
+
+    public void loginCheck() throws MqttException {
+        Log.d(TAG, "Connecting to broker: " + sampleClient.getServerURI());
+        doConnect();
+        try {
+            IMqttToken disconnect = sampleClient.disconnect();
+            disconnect.waitForCompletion();
+            Log.d(TAG, "Disconnected");
+        } catch (MqttException e) {
+            handleException(e);
+        }
+    }
+
     public boolean isConnected() {
-        return sampleClient.isConnected();
+        boolean connected = sampleClient.isConnected();
+        if (connected) {
+            useOffline = false;
+        }
+        return connected;
     }
 
     public void disconnect() {
         try {
-            sampleClient.disconnect();
+            IMqttToken disconnect = sampleClient.disconnect();
+            disconnect.waitForCompletion();
         } catch (MqttException me) {
             handleException(me);
         }

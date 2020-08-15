@@ -1,15 +1,13 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
-import android.os.Bundle;
+import android.os.Process;
+import android.os.*;
 import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
@@ -17,20 +15,29 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
 import com.mikepenz.actionitembadge.library.ActionItemBadge;
-
-import de.dipf.edutec.thriller.experiencesampling.sensorservice.DataLayerListenerService;
-
 import de.dipf.edutec.thriller.experiencesampling.R;
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.MessagesSingleton;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.WebSocketService;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.AccountConnector;
+import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import pl.droidsonroids.gif.GifImageButton;
+
+import java.lang.ref.WeakReference;
+
+import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.useOffline;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
+    public static final String ACCOUNT_TYPE = "thriller";
+
+    private MqttService mqttService;
+    private HandlerThread bgHandlerThread;
 
     // GUI Elements
     GifImageButton dummy2;
@@ -38,6 +45,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     Menu menu;
     int msgToHandle = 0;
+
+    private TextView mqttStatusText;
+
+    private Handler mqttStatusHandler;
+    private Runnable checkMqttStatus = new Runnable() {
+        @Override
+        public void run() {
+            mqttStatusText = ((TextView) findViewById(R.id.mqtt_status));
+            mqttStatusText.setText(mqttService.isConnected() ? "Connected" : "Disconnected");
+            mqttStatusHandler.postDelayed(this, 1000);
+        }
+    };
 
     private BroadcastReceiver mConnectionReceiver = new BroadcastReceiver() {
         @SuppressLint("RestrictedApi")
@@ -70,8 +89,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    @Override
+    protected void onResume() {
+        super.onResume();
 
+        this.mqttService = ((CustomApplication) getApplication()).getContext().getMqttService();
 
+        if(!mqttService.isConnected()) {
+            new ConnectTask(this).execute();
+        }
+    }
+
+    private static class ConnectTask extends AsyncTask<Void, Void, Void> {
+        private final WeakReference<MainActivity> mainActivityWeak;
+
+        private ConnectTask(MainActivity mainActivity) {
+            this.mainActivityWeak = new WeakReference<>(mainActivity);
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            MainActivity mainActivity = mainActivityWeak.get();
+            if (mainActivity == null) {
+                return null;
+            }
+            if(Looper.myLooper() == null) {
+                Looper.prepare();
+            }
+            AccountConnector.connect(mainActivity, false, false, !useOffline, mainActivity.mqttService);
+            return null;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,17 +136,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Receiver receiver = new Receiver(this);
         startForegroundService(new Intent(this, WebSocketService.class));
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(mConnectionReceiver,
-                new IntentFilter("connection-state-changed"));
+//        LocalBroadcastManager.getInstance(this).registerReceiver(mConnectionReceiver,
+//                new IntentFilter("connection-state-changed"));
+//
+//        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+//                new IntentFilter("message-received"));
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter("message-received"));
 
-        // start service to connect to mqtt and listen to data from wearable
-        // this service is usually autostarted on boot. The following serves as a way to restart the service,
-        // for instance if it was shutdown unintentionally.
-//        Intent intent = new Intent(this, DataLayerListenerService.class);
-//        startForegroundService(intent);
+        this.bgHandlerThread = new HandlerThread("Read byte data", Process.THREAD_PRIORITY_MORE_FAVORABLE);
+        this.bgHandlerThread.start();
+//        this.mqttStatusHandler = new Handler(bgHandlerThread.getLooper());
+        this.mqttStatusHandler = new Handler();
+        mqttStatusHandler.post(checkMqttStatus);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mqttStatusHandler.removeCallbacks(checkMqttStatus);
     }
 
     // instantiate GUI Elements

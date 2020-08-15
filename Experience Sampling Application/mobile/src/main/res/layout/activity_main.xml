@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -22,6 +21,12 @@
             android:gravity="bottom|center_horizontal"
             android:baselineAligned="false">
 
+            <TextView
+                    android:text="....."
+                    android:layout_width="wrap_content"
+                    android:layout_height="197dp"
+                    android:id="@+id/mqtt_status"
+                    android:layout_weight="1"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/bt_main_info"

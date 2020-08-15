@@ -1,10 +1,13 @@
 package de.dipf.edutec.thriller.experiencesampling.activities;
 
-import android.content.Context;
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.content.*;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Window;
-import android.widget.Toast;
 
+import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.ListPreference;
@@ -13,8 +16,6 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.NodeClient;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
@@ -22,7 +23,9 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
-import de.dipf.edutec.thriller.experiencesampling.dialogs.ProgressDialog;
+import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
+
+import static de.dipf.edutec.thriller.experiencesampling.activities.MainActivity.ACCOUNT_TYPE;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -43,8 +46,6 @@ public class SettingsActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-
-
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener {
@@ -54,11 +55,67 @@ public class SettingsActivity extends AppCompatActivity {
 
         // To Change Preferences
         public ListPreference connectedDevicesList;
+        private AccountManager accountManager;
+        private Preference removeCredentials;
 
+        private Account getAccount() {
+            Account[] accountsByType = accountManager.getAccountsByType(ACCOUNT_TYPE);
+            if (accountsByType.length == 0) {
+                Log.e(TAG, "Account not found.");
+                return null;
+            }
+            return accountsByType[0];
+        }
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
+
+            accountManager = AccountManager.get(getContext());
+
+            removeCredentials = findPreference("remove_credentials");
+            Account account = getAccount();
+            if(account == null) {
+                removeCredentials.setEnabled(false);
+            }
+
+            findPreference("edit_credentials").setOnPreferenceClickListener(preference -> {
+                Account ac = getAccount();
+                if (ac == null) {
+                    Log.e(TAG,"Account not found.");
+                    accountManager.addAccount(ACCOUNT_TYPE, null, null, null, getActivity(), null, null);
+                    return true;
+                }
+
+                accountManager.updateCredentials(ac, null, null, getActivity(), null, null);
+                removeCredentials.setEnabled(true);
+                return true;
+            });
+
+            removeCredentials.setOnPreferenceClickListener(preference -> {
+                accountManager.removeAccount(getAccount(), getActivity(), null, null);
+                preference.setEnabled(false);
+                disconnect();
+                return true;
+            });
+
+            findPreference("host").setOnPreferenceClickListener(this::disconnect);
+            findPreference("port").setOnPreferenceClickListener(this::disconnect);
+
+            Preference userId = findPreference("user_id");
+//            userId.setEnabled(false);
+            userId.setOnPreferenceClickListener(preference -> {
+                Log.e(TAG, "on user id tap");
+                ClipboardManager clipboardManager = (ClipboardManager)
+                        getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("user id", preference.getSummary());
+                clipboardManager.setPrimaryClip(clip);
+                Toast.makeText(getActivity(), "User ID copied to clipboard.", Toast.LENGTH_LONG).show();
+                return true;
+            });
+            userId.setSummary(getActivity().getApplicationContext()
+                            .getSharedPreferences(getActivity().getApplicationContext().getPackageName(), Context.MODE_PRIVATE)
+                            .getString("UUID", ""));
 
             this.connectedDevicesList = findPreference(getResources().getString(R.string.key_connected_devices));
             this.connectedDevicesList.setOnPreferenceClickListener(this);
@@ -74,9 +131,23 @@ public class SettingsActivity extends AppCompatActivity {
             ListPreference updateRateList = findPreference(getResources().getString(R.string.key_update_rate));
             updateRateList.setOnPreferenceClickListener(this);
 
-            this.connectedBluetoothDevices = new ArrayList<String>();
-            this.connectedBluetoothValues = new ArrayList<String>();
+            this.connectedBluetoothDevices = new ArrayList<>();
+            this.connectedBluetoothValues = new ArrayList<>();
+        }
 
+        @Override
+        public void onResume() {
+            super.onResume();
+            removeCredentials.setEnabled(getAccount() != null);
+        }
+
+        private boolean disconnect(Preference preference) {
+            return disconnect();
+        }
+
+        private boolean disconnect() {
+            ((CustomApplication) getActivity().getApplication()).getContext().getMqttService().disconnect();
+            return true;
         }
 
         @Override

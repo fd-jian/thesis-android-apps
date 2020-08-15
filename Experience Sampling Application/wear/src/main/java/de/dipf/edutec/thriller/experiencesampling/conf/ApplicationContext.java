@@ -9,7 +9,6 @@ import lombok.Getter;
 
 @Getter
 public class ApplicationContext {
-    // TODO: unsafe certificate validation for development, turn off later
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
     private static final String NOTIFICATION_CONTENT_TITLE = "App is still running";
     private static final String NOTIFICATION_CONTENT_TEXT = "Tap to go back to the app.";
@@ -26,7 +25,6 @@ public class ApplicationContext {
                 notificationManager,
                 NOTIFICATION_CONTENT_TITLE,
                 NOTIFICATION_CONTENT_TEXT,
-                // TODO: long qualifier necessary to use shared resource?
                 de.dipf.edutec.thriller.experiencesampling.shared.R.drawable.ic_notifications_black_24dp);
     }
 }

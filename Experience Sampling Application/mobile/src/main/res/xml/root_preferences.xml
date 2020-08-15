@@ -20,8 +20,34 @@
             app:entryValues="@array/conn_dev_def_array_values"
             app:key="@string/key_connected_devices"
             app:title="@string/connected_devices_title" />
+
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="MQTT Connection">
+
+        <EditTextPreference
+                app:key="host"
+                app:title="Hostname"
+                app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+                app:key="port"
+                app:title="Port"
+                app:useSimpleSummaryProvider="true" />
+
+        <Preference
+                app:key="edit_credentials"
+                app:title="Change Login Credentials" />
+
+        <Preference
+                app:key="remove_credentials"
+                app:title="Remove Login Credentials" />
+
+        <Preference
+                app:key="user_id"
+                app:title="User ID" />
+
+    </PreferenceCategory>
 
 
 </PreferenceScreen>

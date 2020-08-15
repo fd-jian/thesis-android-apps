@@ -10,7 +10,9 @@
         <item name="android:windowExitTransition">@transition/explode</item>
 
 
-        <!-- Customize your Color theme here. -->
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout</item>
+
+        <!-- Customize your Color heme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
@@ -20,5 +22,9 @@
 
 
     </style>
+
+    <style name="Widget.App.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+    </style>
+
 
 </resources>
