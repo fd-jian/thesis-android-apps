@@ -140,6 +140,7 @@ public class DataLayerListenerService extends WearableListenerService {
         SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(getApplicationContext().getPackageName(), Context.MODE_PRIVATE);
         userId = sharedPreferences.getString("UUID", null);
         sessionId = UUID.randomUUID().toString();
+        sharedPreferences.edit().putString("session_id", sessionId).apply();
     }
 
     public void startProcessing(InputStream command) {
