@@ -2,6 +2,7 @@ package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -31,12 +32,11 @@ public class SensorDataService extends WearableListenerService {
     public static final String LAST_SECOND_INTENT_EXTRA = "records-per-second";
     public static final String UPDATED_ANALYTICS_INTENT_ACTION = "updated-analytics";
     public static final String RECORDS_PER_SECOND_INTENT_EXTRA = "records-last-second";
-    public static boolean isRunning = false;
 
     private static final String WEAR_WAKELOCKTAG = "wear:wakelock-service";
     private static final String TAG = "wear:" + SensorDataService.class.getSimpleName();
     private static final String ACC_TAG = "wear:" + AccelerometerListener.class.getSimpleName();
-    private static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
+    public static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
     private static final int[] ENABLED_SENSORS = new int[]{
             Sensor.TYPE_LINEAR_ACCELERATION
 //            Sensor.TYPE_LINEAR_ACCELERATION,
@@ -53,7 +53,9 @@ public class SensorDataService extends WearableListenerService {
     private ChannelClient channelClient;
     private ForegroundNotificationCreator fgNotificationCreator;
     private HandlerThread sensorThread;
-    private LocalBroadcastManager broadcastManager;
+    private SharedPreferences.Editor edit;
+    private SharedPreferences sharedPreferences;
+    private ChannelClient.Channel channel;
 
     private int messageCount = 0;
     private int messageCountTotal = 0;
@@ -110,7 +112,9 @@ public class SensorDataService extends WearableListenerService {
     @Override
     public void onCreate() {
         super.onCreate();
-        isRunning = false;
+        sharedPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+        edit = sharedPreferences.edit();
+        edit.putBoolean("running", false).apply();
         this.fgNotificationCreator = Objects.requireNonNull((CustomApplication) getApplication())
                 .getContext().getForegroundNotificationCreator();
 
@@ -124,7 +128,7 @@ public class SensorDataService extends WearableListenerService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Starting sensor data service.");
-        isRunning = true;
+        edit.putBoolean("running", true).apply();
         wakeLock = Objects.requireNonNull((PowerManager) getApplicationContext()
                 .getSystemService(Context.POWER_SERVICE))
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WEAR_WAKELOCKTAG);
@@ -137,22 +141,26 @@ public class SensorDataService extends WearableListenerService {
 
         capabilityClient
                 .getCapability(ACCELEROMETER_RECEIVER_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
-                .addOnSuccessListener(this::onCapabilityChanged);
+                .addOnSuccessListener(this::applyCapability);
 
         return START_STICKY;
     }
 
-    @Override
-    public void onCapabilityChanged(CapabilityInfo capabilityInfo) {
-        Log.i(TAG, "capability changed");
+    public void applyCapability(CapabilityInfo capabilityInfo) {
         Set<Node> connectedNodes = capabilityInfo.getNodes();
         Log.i(TAG, "Updating capability: " + capabilityInfo.getName() + ", nodes found: " + connectedNodes.size());
         accelerometerNodeId = pickBestNodeId(connectedNodes);
         Log.i(TAG, "AccelerometerNodeId is now " + accelerometerNodeId);
 
-        if (isRunning && accelerometerNodeId != null) {
+        if (sharedPreferences.getBoolean("running", false) && accelerometerNodeId != null) {
             openChannel();
         }
+    }
+
+    @Override
+    public void onCapabilityChanged(CapabilityInfo capabilityInfo) {
+        Log.i(TAG, "capability changed");
+        applyCapability(capabilityInfo);
     }
 
     private void openChannel() {
@@ -163,14 +171,27 @@ public class SensorDataService extends WearableListenerService {
     }
 
     public void registerSensorListener(ChannelClient.Channel channel) {
-        channelClient.getOutputStream(channel).addOnSuccessListener(outputStream -> {
-            if (accelerometerListener != null) {
-                Log.d(TAG, "listener not null. set new outputstream");
-                accelerometerListener.channelOutput = outputStream;
+        this.channel = channel;
+        channelClient.getOutputStream(channel).addOnCompleteListener(command -> {
+            if (command.isSuccessful()) {
+                OutputStream result = command.getResult();
+                if (accelerometerListener != null) {
+                    Log.d(TAG, "listener not null. set new outputstream");
+                    accelerometerListener.channelOutput = result;
+                } else {
+                    Log.d(TAG, "listener is null. instantiate with outputstream");
+                    accelerometerListener = new AccelerometerListener(result);
+                }
+                edit.putBoolean("mobile_connected", true);
             } else {
-                Log.d(TAG, "listener is null. instantiate with outputstream");
-                accelerometerListener = new AccelerometerListener(outputStream);
+                Log.e(TAG, command.getException().getCause().toString());
+                if (accelerometerListener == null) {
+                    accelerometerListener = new AccelerometerListener();
+                }
+                edit.putBoolean("mobile_connected", false);
             }
+
+            edit.apply();
 
             statHandler.post(stats);
 
@@ -189,8 +210,35 @@ public class SensorDataService extends WearableListenerService {
                     Log.e(TAG, "Could not register accelerometer listener.");
                 }
             });
-
         });
+//                .addOnSuccessListener(outputStream -> {
+//            if (accelerometerListener != null) {
+//                Log.d(TAG, "listener not null. set new outputstream");
+//                accelerometerListener.channelOutput = outputStream;
+//            } else {
+//                Log.d(TAG, "listener is null. instantiate with outputstream");
+//                accelerometerListener = new AccelerometerListener(outputStream);
+//            }
+//
+//            statHandler.post(stats);
+//
+//            sensorThread = new HandlerThread("Sensor thread", Process.THREAD_PRIORITY_MORE_FAVORABLE);
+//            sensorThread.start();
+//
+//            Arrays.stream(ENABLED_SENSORS).forEach(value -> {
+//                Log.i(TAG, "Registering accelerometer listener.");
+//                if (sensorManager.registerListener(
+//                        accelerometerListener,
+//                        Objects.requireNonNull(sensorManager.getDefaultSensor(value)),
+//                        SensorManager.SENSOR_DELAY_FASTEST,
+//                        new Handler(sensorThread.getLooper()))) {
+//                    Log.i(TAG, "Registered accelerometer listener successfully.");
+//                } else {
+//                    Log.e(TAG, "Could not register accelerometer listener.");
+//                }
+//            });
+//
+//        });
     }
 
     private String pickBestNodeId(Set<Node> nodes) {
@@ -209,9 +257,11 @@ public class SensorDataService extends WearableListenerService {
     public void onDestroy() {
         Log.i(TAG, "onDestroy called.");
         super.onDestroy();
-        isRunning = false;
+        edit.putBoolean("running", false).apply();
         cleanup(accelerometerListener);
 
+        Optional.ofNullable(channel).ifPresent(channel -> channelClient.close(channel));
+        getSharedPreferences(getPackageName(), MODE_PRIVATE).edit().putBoolean("mobile_connected", false).apply();
         Log.i(TAG, "Unregistered accelerometer listener.");
 
         Optional.ofNullable(accelerometerListener)
@@ -248,6 +298,10 @@ public class SensorDataService extends WearableListenerService {
             this.channelOutput = channelOutput;
         }
 
+        public AccelerometerListener() {
+
+        }
+
         @Override
         public void onSensorChanged(SensorEvent event) {
             for (int i = 0; i < MULTIPLY_SENSOR_RECORDS_BY; i++) {
@@ -265,7 +319,7 @@ public class SensorDataService extends WearableListenerService {
                         channelOutput = null; // in case unregister takes some time to avoid repeated failures
                         Log.i(TAG, "Sensor listener unregistered and stream closed");
 
-                        if (isRunning) {
+                        if (sharedPreferences.getBoolean("running", false)) {
                             Log.i(TAG, "Still running, reopening channel.");
                             openChannel();
                         }
