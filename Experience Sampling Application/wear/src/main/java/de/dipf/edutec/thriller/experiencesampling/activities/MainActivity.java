@@ -19,6 +19,7 @@ import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.SensorDataService;
 
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 public class MainActivity extends WearableActivity {
 
@@ -26,6 +27,7 @@ public class MainActivity extends WearableActivity {
     private Button startButton;
     private Button stopButton;
     private SharedPreferences sharedPreferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener onSharedPreferenceChangeListener;
 
     @Override
     public void onRestart() {
@@ -132,33 +134,37 @@ public class MainActivity extends WearableActivity {
         setRunning(running);
         updateStatus(running, connected);
 
-        sharedPreferences.registerOnSharedPreferenceChangeListener((sprefs, key) -> {
-                    boolean run;
-                    boolean con;
-                   switch(key) {
-                       case "mobile_connected":
-                           run = sprefs.getBoolean(key, false);
-                           con = sprefs.getBoolean("running", false);
-                           updateStatus(run, con);
-                       case "running":
-                           run = sprefs.getBoolean("mobile_connected", false);
-                           con = sprefs.getBoolean(key, false);
-                           setRunning(con);
-                           updateStatus(run, con);
-                   }
-                });
+        onSharedPreferenceChangeListener = (sprefs, key) -> {
+            Log.d(TAG, String.format("on shared preferences change: %s", key));
+            boolean run;
+            boolean con;
+            switch (key) {
+                case "mobile_connected":
+                    run = sprefs.getBoolean(key, false);
+                    con = sprefs.getBoolean("running", false);
+                    updateStatus(run, con);
+                case "running":
+                    run = sprefs.getBoolean("mobile_connected", false);
+                    con = sprefs.getBoolean(key, false);
+                    setRunning(con);
+                    updateStatus(run, con);
+            }
+        };
+        sharedPreferences.registerOnSharedPreferenceChangeListener(onSharedPreferenceChangeListener);
     }
 
     private void updateStatus(boolean running, boolean connected) {
         Log.d(TAG, String.format("updating status ->  running: %s, connected: %s", running, connected));
         if (running) {
+            // show session running status
             if (connected) {
                 // show connected status
             } else {
                 // show disconnected status
             }
         } else {
-            //hide status
+            // show session not running status
+            // hide connected status
         }
     }
 

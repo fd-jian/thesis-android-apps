@@ -152,8 +152,12 @@ public class SensorDataService extends WearableListenerService {
         accelerometerNodeId = pickBestNodeId(connectedNodes);
         Log.i(TAG, "AccelerometerNodeId is now " + accelerometerNodeId);
 
-        if (sharedPreferences.getBoolean("running", false) && accelerometerNodeId != null) {
-            openChannel();
+        if (sharedPreferences.getBoolean("running", false)) {
+            if (accelerometerNodeId != null) {
+                openChannel();
+            } else {
+                registerSensorListeners(null, null);
+            }
         }
     }
 
@@ -167,78 +171,66 @@ public class SensorDataService extends WearableListenerService {
         Log.i(TAG, "Opening channel to node id " + accelerometerNodeId);
         channelClient = Wearable.getChannelClient(getApplicationContext());
         channelClient.openChannel(accelerometerNodeId, "/accelerometer_data")
-                .addOnSuccessListener(this::registerSensorListener);
+                .addOnSuccessListener(this::setupChannelConnection);
     }
 
-    public void registerSensorListener(ChannelClient.Channel channel) {
+    public void setupChannelConnection(ChannelClient.Channel channel) {
         this.channel = channel;
         channelClient.getOutputStream(channel).addOnCompleteListener(command -> {
-            if (command.isSuccessful()) {
-                OutputStream result = command.getResult();
-                if (accelerometerListener != null) {
-                    Log.d(TAG, "listener not null. set new outputstream");
-                    accelerometerListener.channelOutput = result;
-                } else {
-                    Log.d(TAG, "listener is null. instantiate with outputstream");
-                    accelerometerListener = new AccelerometerListener(result);
-                }
-                edit.putBoolean("mobile_connected", true);
+            boolean withOutputStream = command.isSuccessful();
+            OutputStream result = null;
+            String msg = null;
+            if (withOutputStream) {
+               result = command.getResult();
             } else {
-                Log.e(TAG, command.getException().getCause().toString());
-                if (accelerometerListener == null) {
-                    accelerometerListener = new AccelerometerListener();
-                }
-                edit.putBoolean("mobile_connected", false);
+                msg = command.getException().getCause().toString();
+            }
+            registerSensorListeners(result, msg);
+        });
+    }
+
+    private void registerSensorListeners(OutputStream channelOutput, String err) {
+        Log.d(TAG, "Instantiate Listenere");
+        if (channelOutput != null) {
+            if (accelerometerListener != null) {
+                Log.d(TAG, "listener not null. set new outputstream");
+                accelerometerListener.channelOutput = channelOutput;
+            } else {
+                Log.d(TAG, "listener is null. instantiate with outputstream");
+                accelerometerListener = new AccelerometerListener(channelOutput);
+            }
+            edit.putBoolean("mobile_connected", true);
+        } else {
+            if (err != null) {
+                Log.e(TAG, err);
             }
 
-            edit.apply();
+            if (accelerometerListener == null) {
+                Log.d(TAG, "Intantiating Listener without Output Stream.");
+                accelerometerListener = new AccelerometerListener();
+            }
+            edit.putBoolean("mobile_connected", false);
+        }
 
-            statHandler.post(stats);
+        edit.apply();
 
-            sensorThread = new HandlerThread("Sensor thread", Process.THREAD_PRIORITY_MORE_FAVORABLE);
-            sensorThread.start();
+        statHandler.post(stats);
 
-            Arrays.stream(ENABLED_SENSORS).forEach(value -> {
-                Log.i(TAG, "Registering accelerometer listener.");
-                if (sensorManager.registerListener(
-                        accelerometerListener,
-                        Objects.requireNonNull(sensorManager.getDefaultSensor(value)),
-                        SensorManager.SENSOR_DELAY_FASTEST,
-                        new Handler(sensorThread.getLooper()))) {
-                    Log.i(TAG, "Registered accelerometer listener successfully.");
-                } else {
-                    Log.e(TAG, "Could not register accelerometer listener.");
-                }
-            });
+        sensorThread = new HandlerThread("Sensor thread", Process.THREAD_PRIORITY_MORE_FAVORABLE);
+        sensorThread.start();
+
+        Arrays.stream(ENABLED_SENSORS).forEach(value -> {
+            Log.i(TAG, "Registering accelerometer listener.");
+            if (sensorManager.registerListener(
+                    accelerometerListener,
+                    Objects.requireNonNull(sensorManager.getDefaultSensor(value)),
+                    SensorManager.SENSOR_DELAY_FASTEST,
+                    new Handler(sensorThread.getLooper()))) {
+                Log.i(TAG, "Registered accelerometer listener successfully.");
+            } else {
+                Log.e(TAG, "Could not register accelerometer listener.");
+            }
         });
-//                .addOnSuccessListener(outputStream -> {
-//            if (accelerometerListener != null) {
-//                Log.d(TAG, "listener not null. set new outputstream");
-//                accelerometerListener.channelOutput = outputStream;
-//            } else {
-//                Log.d(TAG, "listener is null. instantiate with outputstream");
-//                accelerometerListener = new AccelerometerListener(outputStream);
-//            }
-//
-//            statHandler.post(stats);
-//
-//            sensorThread = new HandlerThread("Sensor thread", Process.THREAD_PRIORITY_MORE_FAVORABLE);
-//            sensorThread.start();
-//
-//            Arrays.stream(ENABLED_SENSORS).forEach(value -> {
-//                Log.i(TAG, "Registering accelerometer listener.");
-//                if (sensorManager.registerListener(
-//                        accelerometerListener,
-//                        Objects.requireNonNull(sensorManager.getDefaultSensor(value)),
-//                        SensorManager.SENSOR_DELAY_FASTEST,
-//                        new Handler(sensorThread.getLooper()))) {
-//                    Log.i(TAG, "Registered accelerometer listener successfully.");
-//                } else {
-//                    Log.e(TAG, "Could not register accelerometer listener.");
-//                }
-//            });
-//
-//        });
     }
 
     private String pickBestNodeId(Set<Node> nodes) {
@@ -325,7 +317,7 @@ public class SensorDataService extends WearableListenerService {
                         }
                     }
                 } else {
-                    Log.i(TAG, "channelOutput is null");
+//                    Log.i(TAG, "channelOutput is null");
                 }
             }
         }
