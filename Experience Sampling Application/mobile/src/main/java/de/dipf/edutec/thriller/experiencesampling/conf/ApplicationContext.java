@@ -47,7 +47,6 @@ public class ApplicationContext {
 
         mqttService = new MqttService(
                 MqttClientBuilder.builder()
-                        .broker(MQTT_BROKER_URL)
                         .clientId(getUuid(ctx).toString())
                         .build()
                         .build(),

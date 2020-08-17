@@ -8,12 +8,14 @@ import android.os.*;
 import android.os.Process;
 import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import com.google.android.gms.wearable.Channel;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.conf.Globals;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
+import de.dipf.edutec.thriller.experiencesampling.util.SharedPreferencesUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,12 +25,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.loginScreenActive;
+import static de.dipf.edutec.thriller.experiencesampling.util.SharedPreferencesUtil.*;
 
 public class DataLayerListenerService extends WearableListenerService {
 
@@ -125,7 +125,29 @@ public class DataLayerListenerService extends WearableListenerService {
     }
 
     @Override
+    public void onChannelClosed(ChannelClient.Channel channel, int i, int i1) {
+        super.onChannelClosed(channel, i, i1);
+        Log.d(TAG, "on channel closed");
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(getApplicationContext().getPackageName(), Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        edit.remove("session_id").apply();
+
+        List<String> past_sessions = loadListPreference(sharedPreferences, "past_sessions");
+
+        if (past_sessions != null) {
+            past_sessions.add(0, sessionId);
+        } else {
+            past_sessions = new ArrayList<>(Collections.singletonList(sessionId));
+        }
+
+        edit.putString("past_sessions", new JSONArray(past_sessions).toString());
+        edit.apply();
+        sessionId = null;
+    }
+
+    @Override
     public void onChannelOpened(ChannelClient.Channel channel) {
+        super.onChannelOpened(channel);
         Log.i(TAG, "channel opened!");
         this.channel = channel;
         this.readByteDataThread = new HandlerThread("Read byte data", Process.THREAD_PRIORITY_MORE_FAVORABLE);
@@ -211,11 +233,12 @@ public class DataLayerListenerService extends WearableListenerService {
         try {
             sample.put("time", now.toEpochMilli());
             sample.put("values", new JSONArray(floats));
+            sample.put("sessionId", sessionId);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        String topic = String.format("sensors/%s/%s/%s", sensorName, userId, sessionId);
+        String topic = String.format("sensors/%s/%s", sensorName, userId);
         String message = sample.toString();
 
         mqttService.sendMessage(topic, message.getBytes());

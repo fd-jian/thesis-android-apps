@@ -47,6 +47,10 @@
                 app:key="user_id"
                 app:title="User ID" />
 
+        <Preference
+                app:key="session_id"
+                app:title="Session ID" />
+
     </PreferenceCategory>
 
 
