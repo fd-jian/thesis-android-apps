@@ -6,11 +6,14 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.*;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import de.dipf.edutec.thriller.experiencesampling.R;
@@ -18,6 +21,7 @@ import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.SensorDataService;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -140,13 +144,15 @@ public class MainActivity extends WearableActivity {
             boolean con;
             switch (key) {
                 case "mobile_connected":
-                    run = sprefs.getBoolean(key, false);
-                    con = sprefs.getBoolean("running", false);
+                    con = sprefs.getBoolean(key, false);
+                    run = sprefs.getBoolean("running", false);
+                    Log.d(TAG, "connected changed to " + con);
                     updateStatus(run, con);
                 case "running":
-                    run = sprefs.getBoolean("mobile_connected", false);
-                    con = sprefs.getBoolean(key, false);
-                    setRunning(con);
+                    con = sprefs.getBoolean("mobile_connected", true);
+                    run = sprefs.getBoolean(key, false);
+                    Log.d(TAG, "running changed to " + run);
+                    setRunning(run);
                     updateStatus(run, con);
             }
         };
@@ -155,16 +161,25 @@ public class MainActivity extends WearableActivity {
 
     private void updateStatus(boolean running, boolean connected) {
         Log.d(TAG, String.format("updating status ->  running: %s, connected: %s", running, connected));
+        ImageView icon = Objects.requireNonNull(findViewById(R.id.connection_icon));
+        TextView status = Objects.requireNonNull(findViewById(R.id.connection_status));
         if (running) {
-            // show session running status
+            String phone = "Phone %s";
+            Resources resources = getResources();
             if (connected) {
-                // show connected status
+                icon.setImageResource(R.drawable.icon_connected);
+                status.setText(String.format(phone, "connected"));
+                status.setTextColor(resources.getColor(R.color.colorAccent, null));
             } else {
-                // show disconnected status
+                icon.setImageResource(R.drawable.icon_disconnected);
+                status.setText(String.format(phone, "disconnected"));
+                status.setTextColor(resources.getColor(R.color.red_ok, null));
             }
+            icon.setVisibility(View.VISIBLE);
+            status.setVisibility(View.VISIBLE);
         } else {
-            // show session not running status
-            // hide connected status
+            icon.setVisibility(View.INVISIBLE);
+            status.setVisibility(View.INVISIBLE);
         }
     }
 

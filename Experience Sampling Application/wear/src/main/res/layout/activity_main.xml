@@ -37,8 +37,38 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:stretchColumns="2">
+
+            <TableRow>
+                <ImageView
+                        android:id="@+id/connection_icon"
+                        android:visibility="invisible"
+                        android:layout_height="18dp" />
+                <TextView
+                        android:id="@+id/textinput_placeholder"
+                        android:text=""
+                        android:textColor="@color/white"
+                        android:textSize="18px"
+                        android:gravity="left"
+                        android:padding="3dip"/>
+                <TextView
+                        android:id="@+id/connection_status"
+                        android:textSize="14px"
+                        android:gravity="right"
+                        android:visibility="invisible"
+                        android:layout_gravity="left"
+                        android:padding="3dip"/>
+                <TextView
+                        android:id="@+id/textinput_placeholder2"
+                        android:text=""
+                        android:textColor="@color/white"
+                        android:textSize="18px"
+                        android:gravity="left"
+                        android:padding="3dip"/>
+            </TableRow>
+
             <TableRow>
                 <TextView
+                        android:id="@+id/last_second_label"
                         android:text="last second:"
                         android:textColor="@color/white"
                         android:textSize="18px"
@@ -52,6 +82,7 @@
                         android:gravity="left"
                         android:padding="3dip"/>
                 <TextView
+                        android:id="@+id/average_label"
                         android:text="average:"
                         android:textColor="@color/white"
                         android:textSize="18px"

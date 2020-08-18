@@ -154,6 +154,7 @@ public class SensorDataService extends WearableListenerService {
 
         if (sharedPreferences.getBoolean("running", false)) {
             if (accelerometerNodeId != null) {
+                sensorManager.unregisterListener(accelerometerListener);
                 openChannel();
             } else {
                 registerSensorListeners(null, null);
@@ -253,7 +254,8 @@ public class SensorDataService extends WearableListenerService {
         cleanup(accelerometerListener);
 
         Optional.ofNullable(channel).ifPresent(channel -> channelClient.close(channel));
-        getSharedPreferences(getPackageName(), MODE_PRIVATE).edit().putBoolean("mobile_connected", false).apply();
+        getSharedPreferences(getPackageName(), MODE_PRIVATE).edit().remove("mobile_connected").apply();
+//        getSharedPreferences(getPackageName(), MODE_PRIVATE).edit().putBoolean("mobile_connected", false).apply();
         Log.i(TAG, "Unregistered accelerometer listener.");
 
         Optional.ofNullable(accelerometerListener)

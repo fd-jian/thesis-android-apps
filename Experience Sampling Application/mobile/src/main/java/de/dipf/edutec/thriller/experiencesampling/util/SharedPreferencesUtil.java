@@ -14,7 +14,7 @@ public class SharedPreferencesUtil {
             JSONArray past_sessions = new JSONArray(sharedPreferences.getString(key, "[]"));
             List<String> pSessions = new ArrayList();
             for (int i = 0; i < past_sessions.length(); i++) {
-                pSessions.add((String) past_sessions.get(i));
+                pSessions.add(past_sessions.getString(i));
             }
             return pSessions;
 
