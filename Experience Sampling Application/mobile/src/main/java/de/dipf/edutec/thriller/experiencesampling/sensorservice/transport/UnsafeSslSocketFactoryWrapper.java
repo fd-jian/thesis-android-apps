@@ -4,7 +4,7 @@ import javax.net.ssl.*;
 import java.security.*;
 import java.security.cert.X509Certificate;
 
-public class UnsafeSslSocketFactoryFactory implements SslSocketFactoryFactory {
+public class UnsafeSslSocketFactoryWrapper implements SslSocketFactoryWrapper {
 
     public SSLSocketFactory create() {
         SSLContext sslContext;

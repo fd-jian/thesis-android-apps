@@ -14,7 +14,9 @@ import java.util.UUID;
 
 @Getter
 public class ApplicationContext {
+
     private static final boolean DEVELOPMENT = true;
+
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
     private static final String NOTIFICATION_CONTENT_TITLE = "App is still running";
     private static final String NOTIFICATION_CONTENT_TEXT = "Tap to go back to the app.";
@@ -28,11 +30,12 @@ public class ApplicationContext {
         connOpts.setCleanSession(true);
         connOpts.setAutomaticReconnect(true);
         connOpts.setConnectionTimeout(10);
-        SslSocketFactoryFactory sslSocketFactoryFactory = getSslSocketFactoryWrapper(ctx);
 
-        // if null, there was no certificate provided in PROD so the trusted android certificates will be allowed
-        if(sslSocketFactoryFactory != null) {
-            connOpts.setSocketFactory(sslSocketFactoryFactory.create());
+        SslSocketFactoryWrapper sslSocketFactoryWrapper = createSslSocketFactoryWrapper(ctx);
+        // if null, there was no certificate provided in PROD, so only the trusted android certificates will be allowed
+        if(sslSocketFactoryWrapper != null) {
+            connOpts.setSocketFactory(sslSocketFactoryWrapper.create());
+            connOpts.setSSLHostnameVerifier((hostname, session) -> true);
         }
 
         this.foregroundNotificationCreator = new ForegroundNotificationCreator(
@@ -67,15 +70,15 @@ public class ApplicationContext {
     }
 
     @Nullable
-    private SslSocketFactoryFactory getSslSocketFactoryWrapper(Context ctx) {
-        SslSocketFactoryFactory socketFactoryFactory = null;
+    private SslSocketFactoryWrapper createSslSocketFactoryWrapper(Context ctx) {
+        SslSocketFactoryWrapper socketFactoryFactory = null;
 
         if(DEVELOPMENT) {
-            socketFactoryFactory = new UnsafeSslSocketFactoryFactory();
+            socketFactoryFactory = new UnsafeSslSocketFactoryWrapper();
         } else {
             int raw = ctx.getResources().getIdentifier("ca", "raw", ctx.getPackageName());
             if (raw != 0) {
-                socketFactoryFactory = new CustomCaSslSocketFactoryFactory(ctx, raw);
+                socketFactoryFactory = new CustomCaSslSocketFactoryWrapper(ctx, raw);
             }
         }
         return socketFactoryFactory;
