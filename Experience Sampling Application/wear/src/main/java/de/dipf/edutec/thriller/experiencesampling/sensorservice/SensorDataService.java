@@ -38,11 +38,11 @@ public class SensorDataService extends WearableListenerService {
     private static final String ACC_TAG = "wear:" + AccelerometerListener.class.getSimpleName();
     public static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
     private static final int[] ENABLED_SENSORS = new int[]{
-            Sensor.TYPE_LINEAR_ACCELERATION
-//            Sensor.TYPE_LINEAR_ACCELERATION,
-//            Sensor.TYPE_ACCELEROMETER,
-//            Sensor.TYPE_GYROSCOPE,
-//            Sensor.TYPE_LIGHT
+//            Sensor.TYPE_LINEAR_ACCELERATION
+            Sensor.TYPE_LINEAR_ACCELERATION,
+            Sensor.TYPE_ACCELEROMETER,
+            Sensor.TYPE_GYROSCOPE,
+            Sensor.TYPE_LIGHT
     };
 
     private PowerManager.WakeLock wakeLock;
