@@ -13,11 +13,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 
-public class CustomCaSslSocketFactoryFactory implements SslSocketFactoryFactory {
+public class CustomCaSslSocketFactoryWrapper implements SslSocketFactoryWrapper {
     private final Context context;
     private final int caRes;
 
-    public CustomCaSslSocketFactoryFactory(Context context, @RawRes int caRes) {
+    public CustomCaSslSocketFactoryWrapper(Context context, @RawRes int caRes) {
         this.context = context;
         this.caRes = caRes;
     }

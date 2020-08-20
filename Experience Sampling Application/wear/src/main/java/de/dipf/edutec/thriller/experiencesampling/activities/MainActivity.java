@@ -5,15 +5,15 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import de.dipf.edutec.thriller.experiencesampling.R;
@@ -21,13 +21,17 @@ import de.dipf.edutec.thriller.experiencesampling.messageservice.Receiver;
 import de.dipf.edutec.thriller.experiencesampling.messageservice.SendMessageWear;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.SensorDataService;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 public class MainActivity extends WearableActivity {
 
     private static final String TAG = "wear:" + MainActivity.class.getSimpleName();
     private Button startButton;
     private Button stopButton;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener onSharedPreferenceChangeListener;
 
     @Override
     public void onRestart() {
@@ -43,7 +47,7 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onResume() {
         super.onResume();
-        setRunning(SensorDataService.isRunning);
+        setRunning(sharedPreferences.getBoolean("running", false));
         Log.d(TAG, "onResume called");
     }
 
@@ -70,8 +74,6 @@ public class MainActivity extends WearableActivity {
 
         stopButton = Optional.ofNullable((Button) findViewById(R.id.bt_main_stopSession))
                 .orElseThrow(() -> new RuntimeException(String.format("Button %s not found.", R.id.bt_main_stopSession)));
-
-        setRunning(SensorDataService.isRunning);
 
         Intent intent = new Intent(getApplicationContext(), SensorDataService.class);
         intent.setClassName(getPackageName(), SensorDataService.class.getName());
@@ -109,7 +111,7 @@ public class MainActivity extends WearableActivity {
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
-                        setRunning(SensorDataService.isRunning);
+                        setRunning(sharedPreferences.getBoolean("running", false));
                     }
                 }, new IntentFilter("sensor-service-destroyed"));
 
@@ -129,6 +131,56 @@ public class MainActivity extends WearableActivity {
 
         createNotificationChannel();
 
+        sharedPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+        boolean running = sharedPreferences.getBoolean("running", false);
+        boolean connected = sharedPreferences.getBoolean("mobile_connected", false);
+
+        setRunning(running);
+        updateStatus(running, connected);
+
+        onSharedPreferenceChangeListener = (sprefs, key) -> {
+            Log.d(TAG, String.format("on shared preferences change: %s", key));
+            boolean run;
+            boolean con;
+            switch (key) {
+                case "mobile_connected":
+                    con = sprefs.getBoolean(key, false);
+                    run = sprefs.getBoolean("running", false);
+                    Log.d(TAG, "connected changed to " + con);
+                    updateStatus(run, con);
+                case "running":
+                    con = sprefs.getBoolean("mobile_connected", true);
+                    run = sprefs.getBoolean(key, false);
+                    Log.d(TAG, "running changed to " + run);
+                    setRunning(run);
+                    updateStatus(run, con);
+            }
+        };
+        sharedPreferences.registerOnSharedPreferenceChangeListener(onSharedPreferenceChangeListener);
+    }
+
+    private void updateStatus(boolean running, boolean connected) {
+        Log.d(TAG, String.format("updating status ->  running: %s, connected: %s", running, connected));
+        ImageView icon = Objects.requireNonNull(findViewById(R.id.connection_icon));
+        TextView status = Objects.requireNonNull(findViewById(R.id.connection_status));
+        if (running) {
+            String phone = "Phone %s";
+            Resources resources = getResources();
+            if (connected) {
+                icon.setImageResource(R.drawable.icon_connected);
+                status.setText(String.format(phone, "connected"));
+                status.setTextColor(resources.getColor(R.color.colorAccent, null));
+            } else {
+                icon.setImageResource(R.drawable.icon_disconnected);
+                status.setText(String.format(phone, "disconnected"));
+                status.setTextColor(resources.getColor(R.color.red_ok, null));
+            }
+            icon.setVisibility(View.VISIBLE);
+            status.setVisibility(View.VISIBLE);
+        } else {
+            icon.setVisibility(View.INVISIBLE);
+            status.setVisibility(View.INVISIBLE);
+        }
     }
 
     private void setRunning(boolean running) {

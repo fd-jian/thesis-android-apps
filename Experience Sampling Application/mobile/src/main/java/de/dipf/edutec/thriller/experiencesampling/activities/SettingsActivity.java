@@ -10,6 +10,7 @@ import android.view.Window;
 import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -20,12 +21,14 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import de.dipf.edutec.thriller.experiencesampling.R;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 
 import static de.dipf.edutec.thriller.experiencesampling.activities.MainActivity.ACCOUNT_TYPE;
+import static de.dipf.edutec.thriller.experiencesampling.util.SharedPreferencesUtil.loadListPreference;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -79,43 +82,69 @@ public class SettingsActivity extends AppCompatActivity {
                 removeCredentials.setEnabled(false);
             }
 
+            FragmentActivity activity = Objects.requireNonNull(getActivity());
             findPreference("edit_credentials").setOnPreferenceClickListener(preference -> {
                 Account ac = getAccount();
                 if (ac == null) {
                     Log.e(TAG,"Account not found.");
-                    accountManager.addAccount(ACCOUNT_TYPE, null, null, null, getActivity(), null, null);
+                    accountManager.addAccount(ACCOUNT_TYPE, null, null, null, activity, null, null);
                     return true;
                 }
 
-                accountManager.updateCredentials(ac, null, null, getActivity(), null, null);
+                accountManager.updateCredentials(ac, null, null, activity, null, null);
                 removeCredentials.setEnabled(true);
                 return true;
             });
 
             removeCredentials.setOnPreferenceClickListener(preference -> {
-                accountManager.removeAccount(getAccount(), getActivity(), null, null);
+                accountManager.removeAccount(getAccount(), activity, null, null);
                 preference.setEnabled(false);
                 disconnect();
                 return true;
             });
 
-            findPreference("host").setOnPreferenceClickListener(this::disconnect);
-            findPreference("port").setOnPreferenceClickListener(this::disconnect);
+            ((Preference) Objects.requireNonNull(findPreference("host"))).setOnPreferenceClickListener(this::disconnect);
+            ((Preference) Objects.requireNonNull(findPreference("port"))).setOnPreferenceClickListener(this::disconnect);
 
-            Preference userId = findPreference("user_id");
-//            userId.setEnabled(false);
+            Preference userId = Objects.requireNonNull(findPreference("user_id"));
+
+            Context applicationContext = Objects.requireNonNull(activity).getApplicationContext();
+            SharedPreferences sharedPreferences = applicationContext.getSharedPreferences(
+                    applicationContext.getPackageName(), Context.MODE_PRIVATE);
+
+            userId.setSummary(sharedPreferences.getString("UUID", ""));
             userId.setOnPreferenceClickListener(preference -> {
-                Log.e(TAG, "on user id tap");
-                ClipboardManager clipboardManager = (ClipboardManager)
-                        getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("user id", preference.getSummary());
-                clipboardManager.setPrimaryClip(clip);
-                Toast.makeText(getActivity(), "User ID copied to clipboard.", Toast.LENGTH_LONG).show();
+                copyToClipboard(activity, preference.getSummary(), "User ID");
                 return true;
             });
-            userId.setSummary(getActivity().getApplicationContext()
-                            .getSharedPreferences(getActivity().getApplicationContext().getPackageName(), Context.MODE_PRIVATE)
-                            .getString("UUID", ""));
+
+            Preference session_id = Objects.requireNonNull(findPreference("session_id"));
+            String prefTitle = "Session ID%s";
+            boolean hasAnySession = true;
+            String activeSession = sharedPreferences.getString("session_id", null);
+
+            if (activeSession != null) {
+                session_id.setTitle(String.format(prefTitle, " (active)"));
+                session_id.setSummary(activeSession);
+            } else {
+                List<String> pastSessions = loadListPreference(sharedPreferences, "past_sessions");
+                if (pastSessions != null && !pastSessions.isEmpty()) {
+                    String lastSessionId = pastSessions.get(0);
+                    session_id.setTitle(String.format(prefTitle, " (inactive)"));
+                    session_id.setSummary(lastSessionId);
+                } else {
+                    hasAnySession = false;
+                    session_id.setTitle(String.format(prefTitle, ""));
+                    session_id.setSummary("None");
+                }
+            }
+
+            if (hasAnySession) {
+                session_id.setOnPreferenceClickListener(preference -> {
+                    copyToClipboard(activity, preference.getSummary(), "Session ID");
+                    return true;
+                });
+            }
 
             this.connectedDevicesList = findPreference(getResources().getString(R.string.key_connected_devices));
             this.connectedDevicesList.setOnPreferenceClickListener(this);
@@ -133,6 +162,15 @@ public class SettingsActivity extends AppCompatActivity {
 
             this.connectedBluetoothDevices = new ArrayList<>();
             this.connectedBluetoothValues = new ArrayList<>();
+        }
+
+        private void copyToClipboard(Context activity, CharSequence text, String label) {
+            Log.e(TAG, String.format("on %s tap", label));
+            ClipboardManager clipboardManager = (ClipboardManager)
+                    Objects.requireNonNull(activity.getSystemService(Context.CLIPBOARD_SERVICE));
+            ClipData clip = ClipData.newPlainText(label, text);
+            clipboardManager.setPrimaryClip(clip);
+            Toast.makeText(activity, String.format("%s copied to clipboard.", label), Toast.LENGTH_LONG).show();
         }
 
         @Override
