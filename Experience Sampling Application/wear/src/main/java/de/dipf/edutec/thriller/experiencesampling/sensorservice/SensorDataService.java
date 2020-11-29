@@ -30,16 +30,16 @@ import java.util.Set;
  *
  * <p>
  * Listens to records of a specified set of sensors and publishes them through a channel for other wearable nodes.
- * </p><br>
+ * </p>
  * <p>
- * When started, the service registers a {@link SensorEventListener} for each desired {@link Sensor}. Registering is initiated only when
+ * When started, the service registers a {@link SensorEventListener} for each desired {@link Sensor}. Registering is initiated only if
  * started explicitly through the {@link #onStartCommand(Intent, int, int)} callback. {@link CapabilityClient} is then
  * used to acquire all available wearable nodes, and a suitable node is picked. A new {@link ChannelClient.Channel}
- * for the current node id is opened through {@link ChannelClient} and passed to all instances of
+ * for the current node ID is opened through {@link ChannelClient} and passed to all instances of
  * {@link AccelerometerListener} that are to be registered. Finally, a {@link HandlerThread} is created and an
  * {@code AccelerometerListener} is registered for each sensor in the created thread. The separate thread prevents the
  * UI performance from being impacted by the listeners.
- * </p><br>
+ * </p>
  * <p>
  * If the service is not started explicitly, it will still listen to changes in capabilities through
  * {@link #onCapabilityChanged(CapabilityInfo)} to keep the node ID up to date with the most suitable node, but no
@@ -47,7 +47,7 @@ import java.util.Set;
  * be re-registered to publish to a newly opened channel for the updated node ID. This feature allows for automatic
  * resume of recording if nodes are momentarily disconnected and then reconnected. As long as {@code running} is set to
  * {@code true} in {@link SharedPreferences}, changes in capability will always re-register the listeners and start recording.
- * </p><br>
+ * </p>
  * <p>
  * Sensor data is transmitted in as a stream of {@code byte} through the provided {@link OutputStream} of the channel.
  * To be able to deserialize the records on the receiving end, a simple protocol is used: timestamp (8 bytes), sensor type (4 bytes),
@@ -56,7 +56,7 @@ import java.util.Set;
  * depending on the sensor type. The protocol assumes a maximum length of 40 bytes, which leaves 24 bytes for sensor
  * data per message. 24 bytes equates to 6 float values, the maximum length of a sensor record according to the documentation
  * (<a href="https://developer.android.com/guide/topics/sensors/sensors_motion">https://developer.android.com/guide/topics/sensors/sensors_motion</a>).
- * </p><br>
+ * </p>
  */
 public class SensorDataService extends WearableListenerService {
     public static final int MULTIPLY_SENSOR_RECORDS_BY = 1;
@@ -96,6 +96,24 @@ public class SensorDataService extends WearableListenerService {
     private long lastMessage;
 
     private final Handler statHandler = new Handler();
+    /**
+     * <p>
+     * Calculates the current statistics for the sensor recording session. Invoked through an instance of {@link Handler},
+     * posts itself at the end of the method to run repeatedly every {@link SensorDataService#DELAY_MILLIS} ms.
+     * </p>
+     * <p>
+     * The current timestamp is used with every run to check the time elapsed since the last update to accumulate
+     * the total time running. Messages per second are then calculated by dividing the total time by the message count.
+     * Total message count and message count for the last interval are updated in the
+     * {@link AccelerometerListener#onSensorChanged(SensorEvent)} callback. The message count for the last interval
+     * is set back to 0 during each runnable execution.
+     * </p>
+     * <p>
+     * {@link Handler#postDelayed(Runnable, long)} does not guarantee that the runnable is executed exactly in the
+     * specified interval. To make sure the runnable is executed on full seconds, the offset from the next full second
+     * is calculated and subtracted from {@code DELAY_MILLIS} so that the next timer runs at a full second again.
+     * </p>
+     */
     private final Runnable stats = new Runnable() {
         @Override
         public void run() {
@@ -133,6 +151,13 @@ public class SensorDataService extends WearableListenerService {
         }
     };
 
+    /**
+     * Broadcast the statistics for the UI with {@link LocalBroadcastManager}. The statistics sent to the UI are
+     * average message count per second (rate) and message count for the last interval.
+     *
+     * @param count message count for the last interval
+     * @param value average message count per second (rate)
+     */
     private void sendBroadcastUpdate(int count, float value) {
         Intent intent = new Intent();
         intent.setAction(UPDATED_ANALYTICS_INTENT_ACTION);
@@ -141,6 +166,9 @@ public class SensorDataService extends WearableListenerService {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    /**
+     * Initializes variables needed by other callbacks when the service is created.
+     */
     @Override
     public void onCreate() {
         super.onCreate();
@@ -157,6 +185,20 @@ public class SensorDataService extends WearableListenerService {
         capabilityClient = Wearable.getCapabilityClient(this);
     }
 
+    /**
+     * <p>
+     * Starts the service as a foreground service.
+     * </p>
+     * <p>
+     * {@code running} is set to true in {@link SharedPreferences}.
+     * </p>
+     * A wake lock is acquired to make sure the service
+     *
+     * @param intent intent for the start command
+     * @param flags flags for the start command
+     * @param startId start id for the start command
+     * @return
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Starting sensor data service.");
