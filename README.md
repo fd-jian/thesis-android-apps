@@ -17,3 +17,14 @@ This is an exception thrown by the Gradle plugin. The solution might be to updat
 ## How to handle Android SDK Versions
 
 https://medium.com/androiddevelopers/picking-your-compilesdkversion-minsdkversion-targetsdkversion-a098a0341ebd
+
+# Credentials
+
+## Regular User Access
+user:michael2020
+
+## ESM Admin Access
+root:jackson2020
+
+# Testing Battery Consumption
+- A battery report for both wear and phone has been created and was [uploaded to the wiki](https://gitlab.tba-hosting.de/edutec/thriller/android-application/-/wikis/Battery-Consumption-Report-(2020-11-25))
