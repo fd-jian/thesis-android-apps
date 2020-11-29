@@ -26,6 +26,38 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ *
+ * <p>
+ * Listens to records of a specified set of sensors and publishes them through a channel for other wearable nodes.
+ * </p><br>
+ * <p>
+ * When started, the service registers a {@link SensorEventListener} for each desired {@link Sensor}. Registering is initiated only when
+ * started explicitly through the {@link #onStartCommand(Intent, int, int)} callback. {@link CapabilityClient} is then
+ * used to acquire all available wearable nodes, and a suitable node is picked. A new {@link ChannelClient.Channel}
+ * for the current node id is opened through {@link ChannelClient} and passed to all instances of
+ * {@link AccelerometerListener} that are to be registered. Finally, a {@link HandlerThread} is created and an
+ * {@code AccelerometerListener} is registered for each sensor in the created thread. The separate thread prevents the
+ * UI performance from being impacted by the listeners.
+ * </p><br>
+ * <p>
+ * If the service is not started explicitly, it will still listen to changes in capabilities through
+ * {@link #onCapabilityChanged(CapabilityInfo)} to keep the node ID up to date with the most suitable node, but no
+ * records will be recorded. If capabilities change whilst the service is already running, sensor listeners will
+ * be re-registered to publish to a newly opened channel for the updated node ID. This feature allows for automatic
+ * resume of recording if nodes are momentarily disconnected and then reconnected. As long as {@code running} is set to
+ * {@code true} in {@link SharedPreferences}, changes in capability will always re-register the listeners and start recording.
+ * </p><br>
+ * <p>
+ * Sensor data is transmitted in as a stream of {@code byte} through the provided {@link OutputStream} of the channel.
+ * To be able to deserialize the records on the receiving end, a simple protocol is used: timestamp (8 bytes), sensor type (4 bytes),
+ * length of the record array (4 bytes) and the record array itself (n bytes) are serialized to bytes arrays and merged into one byte array in
+ * succession. The start of the byte array is always 16 bytes long, whereas the size of the actual records may vary
+ * depending on the sensor type. The protocol assumes a maximum length of 40 bytes, which leaves 24 bytes for sensor
+ * data per message. 24 bytes equates to 6 float values, the maximum length of a sensor record according to the documentation
+ * (<a href="https://developer.android.com/guide/topics/sensors/sensors_motion">https://developer.android.com/guide/topics/sensors/sensors_motion</a>).
+ * </p><br>
+ */
 public class SensorDataService extends WearableListenerService {
     public static final int MULTIPLY_SENSOR_RECORDS_BY = 1;
     public static final int DELAY_MILLIS = 1000;
@@ -157,6 +189,8 @@ public class SensorDataService extends WearableListenerService {
                 sensorManager.unregisterListener(accelerometerListener);
                 openChannel();
             } else {
+                // TODO: listeners are also registered when no node is connected and no channelOutput is avaiable.
+                //  this is probably just useful for debugging/development purposes.
                 registerSensorListeners(null, null);
             }
         }
