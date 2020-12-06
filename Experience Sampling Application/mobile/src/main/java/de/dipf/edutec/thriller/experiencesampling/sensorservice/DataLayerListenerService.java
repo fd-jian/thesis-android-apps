@@ -3,19 +3,16 @@ package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.hardware.Sensor;
 import android.os.*;
 import android.os.Process;
 import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import com.google.android.gms.wearable.Channel;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.conf.Globals;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
-import de.dipf.edutec.thriller.experiencesampling.util.SharedPreferencesUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,32 +35,6 @@ public class DataLayerListenerService extends WearableListenerService {
     public static final int DELAY_MILLIS = 1000;
 
     private static final String TAG = "wear:" + DataLayerListenerService.class.getSimpleName();
-    private static final Map<Integer, String> sensorTopicNames;
-
-    static {
-        sensorTopicNames = new HashMap<>();
-        sensorTopicNames.put(
-                Sensor.TYPE_LINEAR_ACCELERATION,
-                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
-        sensorTopicNames.put(
-                Sensor.TYPE_ACCELEROMETER,
-                getSensorSimpleName(Sensor.STRING_TYPE_ACCELEROMETER));
-        sensorTopicNames.put(
-                Sensor.TYPE_GYROSCOPE,
-                getSensorSimpleName(Sensor.STRING_TYPE_GYROSCOPE));
-        sensorTopicNames.put(
-                Sensor.TYPE_LIGHT,
-                getSensorSimpleName(Sensor.STRING_TYPE_LIGHT));
-//        sensorTopicNames.put(
-//                Sensor.TYPE_ACCELEROMETER,
-//                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
-//        sensorTopicNames.put(
-//                Sensor.TYPE_GYROSCOPE,
-//                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
-//        sensorTopicNames.put(
-//                Sensor.TYPE_LIGHT,
-//                getSensorSimpleName(Sensor.STRING_TYPE_LINEAR_ACCELERATION));
-    }
 
     private static String userId;
     private static String sessionId;
@@ -128,7 +99,9 @@ public class DataLayerListenerService extends WearableListenerService {
     public void onChannelClosed(ChannelClient.Channel channel, int i, int i1) {
         super.onChannelClosed(channel, i, i1);
         Log.d(TAG, "on channel closed");
-        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(getApplicationContext().getPackageName(), Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences =
+                getApplicationContext().getSharedPreferences(getApplicationContext().getPackageName(),
+                        Context.MODE_PRIVATE);
         SharedPreferences.Editor edit = sharedPreferences.edit();
         edit.remove("session_id").apply();
 
@@ -168,7 +141,8 @@ public class DataLayerListenerService extends WearableListenerService {
     public void startProcessing(InputStream command) {
         // without new thread, UI hangs. but why? this is supposed to run on a separate thread!
         new Handler(readByteDataThread.getLooper()).post(() -> {
-            Log.i(TAG, "Input stream for channel " + channel.getPath() + " retrieved succesfully. Reading in new thread.");
+            Log.i(TAG, "Input stream for channel " + channel.getPath() + " retrieved succesfully. Reading in new " +
+                    "thread.");
             statHandler.removeCallbacks(stats);
             statHandler.postDelayed(stats, DELAY_MILLIS);
             try {
@@ -208,7 +182,7 @@ public class DataLayerListenerService extends WearableListenerService {
         ByteBuffer buf = ByteBuffer.wrap(data);
         long timestamp = buf.getLong();
         int sensorType = buf.getInt();
-        String sensorName = sensorTopicNames.get(sensorType);
+        String sensorName = Globals.sensorTopicNames.get(sensorType);
         int payloadLength = buf.getInt();
         float[] floats = getFloats(buf, payloadLength);
 
@@ -248,12 +222,6 @@ public class DataLayerListenerService extends WearableListenerService {
         lastMessage = now;
         messageCount++;
         messageCountTotal++;
-    }
-
-    private static String getSensorSimpleName(String sensorType) {
-        return Optional.of(sensorType.split("\\."))
-                .map(strings -> strings[strings.length - 1])
-                .orElse(null);
     }
 
     private float[] getFloats(ByteBuffer buf, int payloadLength) {
