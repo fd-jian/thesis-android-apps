@@ -4,6 +4,10 @@ import javax.net.ssl.*;
 import java.security.*;
 import java.security.cert.X509Certificate;
 
+/**
+ * Wrapper that provides an unsafe {@link SSLSocketFactory} which accepts all certificates. WARNING: ONLY FOR
+ * DEVELOPMENT AND DEBUGGING PURPOSES.
+ */
 public class UnsafeSslSocketFactoryWrapper implements SslSocketFactoryWrapper {
 
     public SSLSocketFactory create() {
@@ -13,7 +17,7 @@ public class UnsafeSslSocketFactoryWrapper implements SslSocketFactoryWrapper {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        TrustManager[] trustAllCerts = new TrustManager[] {
+        TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
 
                     public X509Certificate[] getAcceptedIssuers() {
