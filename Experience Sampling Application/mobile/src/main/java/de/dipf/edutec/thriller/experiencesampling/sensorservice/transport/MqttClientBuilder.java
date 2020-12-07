@@ -15,8 +15,8 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
  * <p>
  * Caveat: Through the @{@link Builder} annotation, an instance of this builder class
  * is built, rather than an actual instance of {@code MqttAsyncClient}. The build method must be called on the result
- * as well to finally obtain an instance of {@code MqttAsyncClient}. This may seem like an odd design, but the {@code
- * @Builder} annotation still saves quite some boilerplate code.
+ * as well to finally obtain an instance of {@code MqttAsyncClient}. This may seem like an odd design, but the
+ * {@code @Builder} annotation still saves quite some boilerplate code.
  * </p>
  */
 @Builder
