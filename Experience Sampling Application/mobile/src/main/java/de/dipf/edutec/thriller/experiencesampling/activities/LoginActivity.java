@@ -2,6 +2,7 @@ package de.dipf.edutec.thriller.experiencesampling.activities;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
+import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 import androidx.preference.PreferenceManager;
 import com.google.android.material.textfield.TextInputLayout;
 import de.dipf.edutec.thriller.experiencesampling.R;
+import de.dipf.edutec.thriller.experiencesampling.auth.AccountAuthenticator;
 import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.sensorservice.transport.MqttService;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -25,6 +27,14 @@ import static de.dipf.edutec.thriller.experiencesampling.conf.Globals.useOffline
 import static de.dipf.edutec.thriller.experiencesampling.sensorservice.AccountConnector.checkPortAndHost;
 import static org.eclipse.paho.client.mqttv3.MqttException.*;
 
+/**
+ * Activity for both the login and the credential modification process. {@link LoginTask} is executed after the user
+ * submitted their credentials. If the login task is successful, the credentials are stored with {@link AccountManager}.
+ * This activity is ought to be initiated by
+ * {@link AccountAuthenticator#addAccount(AccountAuthenticatorResponse, String, String, String[], Bundle)} or
+ * {@link AccountAuthenticator#updateCredentials(AccountAuthenticatorResponse, Account, String, Bundle)}.
+ *
+ */
 public class LoginActivity extends AccountAuthenticatorActivity {
 
     public final static String ARG_ACCOUNT_TYPE = "ACCOUNT_TYPE";
@@ -60,9 +70,6 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         loginScreenActive = false;
     }
 
-    /**
-     * Called when the activity is first created.
-     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "creating login activity");
@@ -115,6 +122,19 @@ public class LoginActivity extends AccountAuthenticatorActivity {
         new LoginTask(this, userName, userPass, host, port, accountType).execute();
     }
 
+    /**
+     * <p>
+     * Connects to the MQTT broker to verify user credentials.
+     * </p>
+     * <p>
+     * If the connection was established successfully, it is disconnected subsequently and the account is stored through
+     * {@link AccountManager#addAccountExplicitly(Account, String, Bundle)}. If the client is already connected, the
+     * account is not added again. In both cases,
+     * {@link AccountAuthenticatorActivity#setAccountAuthenticatorResult(Bundle)} is called with the successful result
+     * of the authentication and the activity finishes. Any other type of error will not result in the activity to
+     * finish but rather keep it active.
+     * </p>
+     */
     private static class LoginTask extends AsyncTask<String, Void, Intent> {
         private final WeakReference<LoginActivity> activityWeakReference;
         private final WeakReference<String> userNameWeak;

@@ -94,7 +94,7 @@ public class SensorDataService extends WearableListenerService {
     /**
      * <p>
      * Calculates the current statistics for the sensor recording session. Invoked through an instance of {@link
-     * Handler}, posts itself at the end of the method to run repeatedly every {@link SensorDataService#DELAY_MILLIS}
+     * Handler}, posts itself at the end of the method to run repeatedly every {@link #DELAY_MILLIS}
      * ms.
      * </p>
      * <p>
