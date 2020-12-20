@@ -1,5 +1,6 @@
 package de.dipf.edutec.thriller.experiencesampling.sensorservice;
 
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,6 +19,7 @@ import de.dipf.edutec.thriller.experiencesampling.conf.CustomApplication;
 import de.dipf.edutec.thriller.experiencesampling.foreground.ForegroundNotificationCreator;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -64,12 +66,11 @@ public class SensorDataService extends WearableListenerService {
     private static final String TAG = "wear:" + SensorDataService.class.getSimpleName();
     private static final String ACC_TAG = "wear:" + AccelerometerListener.class.getSimpleName();
     public static final String ACCELEROMETER_RECEIVER_CAPABILITY = "accelerometer_receiver";
-    private static final int[] ENABLED_SENSORS = new int[]{
-//            Sensor.TYPE_LINEAR_ACCELERATION
-            Sensor.TYPE_LINEAR_ACCELERATION,
-            Sensor.TYPE_ACCELEROMETER,
-            Sensor.TYPE_GYROSCOPE,
-            Sensor.TYPE_LIGHT
+    public static final int[] ENABLED_SENSORS = new int[]{
+//            Sensor.TYPE_LINEAR_ACCELERATION,
+            Sensor.TYPE_ACCELEROMETER
+//            Sensor.TYPE_GYROSCOPE,
+//            Sensor.TYPE_LIGHT
     };
 
     private PowerManager.WakeLock wakeLock;
@@ -290,7 +291,7 @@ public class SensorDataService extends WearableListenerService {
             OutputStream result = null;
             String msg = null;
             if (withOutputStream) {
-               result = command.getResult();
+                result = command.getResult();
             } else {
                 msg = command.getException().getCause().toString();
             }
@@ -401,7 +402,6 @@ public class SensorDataService extends WearableListenerService {
 
         Optional.ofNullable(channel).ifPresent(channel -> channelClient.close(channel));
         getSharedPreferences(getPackageName(), MODE_PRIVATE).edit().remove("mobile_connected").apply();
-//        getSharedPreferences(getPackageName(), MODE_PRIVATE).edit().putBoolean("mobile_connected", false).apply();
         Log.i(TAG, "Unregistered accelerometer listener.");
 
         Optional.ofNullable(accelerometerListener)
@@ -455,22 +455,46 @@ public class SensorDataService extends WearableListenerService {
 
         /**
          * <p>
-         * On each sensor change event, data is serialized to bytes using the following protocol: timestamp (8 bytes),
-         * sensor type (4 bytes), length of the record array (4 bytes) and the record array itself (n bytes) are
-         * serialized to bytes arrays and merged into one byte array in succession. The start of the byte array is
-         * always 16 bytes long, whereas the size of the actual records may vary depending on the sensor type. The
-         * protocol assumes a maximum length of 40 bytes, which leaves 24 bytes for sensor data per message. 24 bytes
-         * equates to 6 float values, the maximum length of a sensor record according to the documentation (<a
-         * href="https://developer.android.com/guide/topics/sensors/sensors_motion">https://developer.android.com/guide/topics/sensors/sensors_motion</a>).
+         *     On each sensor change event, data is serialized to bytes using the following protocol:
+         *     <ul>
+         *         <li>Timestamp (8 bytes)</li>
+         *         <li>Sensor type (4 bytes)</li>
+         *         <li>Length of the record array (4 bytes)</li>
+         *         <li>Record payload (n bytes)</li>
+         *     </ul>
+         *     The parts are all serialized to byte arrays and merged into one byte array in succession. The start
+         *     of the byte array is always 16 bytes long, whereas the size of the actual records may vary depending on
+         *     the sensor type. The protocol assumes a maximum length of 40 bytes, which leaves 24 bytes for sensor data
+         *     per message. 24 bytes equates to 6 float values, the maximum length of a sensor record according to the
+         *     documentation (<a href="https://developer.android.com/guide/topics/sensors/sensors_motion">https://developer.android.com/guide/topics/sensors/sensors_motion</a>).
          * </p>
          * <p>
-         * Serialized byte data is written to the {@link OutputStream} provided by the {@link ChannelClient.Channel}. If
-         * an {@link IOException} thrown by the {@code OutputStream} is caught, the {@code InputStream} on the other
-         * side was closed. Therefore, the {@code OutputStream} will be closed as well and {@link
-         * #cleanup(AccelerometerListener)} will be called. If {@code running} is still set to {@code true} in {@link
-         * SharedPreferences}, the channel will be reopened and the sensor listener will be re-registered for all
-         * enabled sensors.
-         *
+         *     Serialized byte data is written to the {@link OutputStream} provided by the
+         *     {@link ChannelClient.Channel}.
+         *     If an {@link IOException} thrown by the {@code OutputStream} is caught, the {@code InputStream} on the
+         *     other side was closed. Therefore, the {@code OutputStream} will be closed as well and
+         *     {@link #cleanup(AccelerometerListener)} will be called. If {@code running} is still set to {@code true
+         *     } in {@link SharedPreferences}, the channel will be reopened and the sensor listener will be
+         *     re-registered for all enabled sensors.
+         * </p>
+         * <pre>
+         *     0                   1                   2                   3
+         *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+         *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         *     |                           Timestamp                           |
+         *     |                                                               | Message
+         *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         *     |                          Sensor Type                          | Header
+         *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         *     |                         Payload length                        |
+         *     +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+         *     |                                                               |
+         *     |                      Up to 6 float values                     | Pay-
+         *     |                                                               | load
+         *     |                                                               |
+         *     |                                                               |
+         *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         * </pre>
          * @param event sensor change event
          */
         @Override
