@@ -46,13 +46,21 @@ The following sequence diagram provides a general overview of the interaction be
 
 The internals of the backend communication are included as well to gain a simplified overview of the internals of a recording session. The wearable application is excluded and simplified in the actor "Student". Interaction with the [Experience Sampling Backend](../../../../experience-sampling-service-backend) is not included.
 
-![Sensor Recording Session: Component Interaction](../../../wikis/uploads/761220696b10444e2fa1c3e955e03fe4/sensor_session.png)
+![Sensor Recording Session: Component Interaction](../../../wikis/uploads/1f30513839560ef1df56e1c7417812bf/sensor_session.png)
 
-#### Interactions between Phone and wearable
+#### Interactions between Phone and Wearable
+The following two sequence diagrams visualizes interactions between wearable and phone application. Devices communicate through Google's Weararble Data Layer API. The first diagram depicts the inner workings of the wearable device, the second diagram those of the phone. `Wearable API` is an abstraction of Google's Wearable Data Layer API to simplify how device communication is establisehd on each side.
 
-The following sequence diagram visualizes interactions between wearable and phone application.
+##### Wearable Communication
+![mobile_wear](../../../wikis/uploads/4517f1eb476b314027b4df0936b4918a/mobile_wear.png)
 
-// TODO
+##### Phone Communication
+![mobile_phone](../../../wikis/uploads/3d9ce475b71732814242a13425826390/mobile_phone.png)
+
+#### Authorization and Account Management
+Android's account manager API is used to store login credentials and manage accounts for the MQTT connection. The following diagram visualizes an abstraction of the account management mechanisms.
+
+![account_manager](../../../wikis/uploads/68762f1a7065e7201bec065215108a1c/account_manager.png)
 
 ## Bugs
 
